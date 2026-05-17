@@ -544,7 +544,7 @@ private struct ParticipantTagFilter: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("Фильтр по тегам")
+                Text("Фильтр участников по тегам")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(Color.appPurple)
@@ -718,6 +718,8 @@ private struct StatBlock: View {
 // MARK: - Detail View
 
 struct AppointmentDetailView: View {
+    @Environment(\.openURL) private var openURL
+
     @State private var displayedAppointment: Appointment
     var onAppointmentUpdated: ((Appointment) -> Void)?
 
@@ -1051,18 +1053,18 @@ struct AppointmentDetailView: View {
     private var eventQRCard: some View {
         VStack(spacing: 14) {
             Text("QR-код для присоединения")
-                .font(.subheadline)
+//                .font(.subheadline)
                 .fontWeight(.semibold)
                 .foregroundStyle(Color.appPurple)
                 .frame(maxWidth: .infinity)
 
             Text("Отсканируйте камерой, чтобы присоединиться")
-                .font(.caption)
+//                .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
             Text("Если приложение установлено — откроется оно. Иначе откроется сайт мероприятия.")
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
@@ -1073,12 +1075,27 @@ struct AppointmentDetailView: View {
                         .fill(Color.white)
                 )
 
-            Text(eventShareLink)
-                .font(.caption2.monospaced())
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-                .truncationMode(.middle)
-                .multilineTextAlignment(.center)
+            if let shareURL = URL(string: eventShareLink) {
+                Button {
+                    openURL(shareURL)
+                } label: {
+                    Text(eventShareLink)
+                        .font(.caption2.monospaced())
+                        .foregroundStyle(.secondary)
+                        .underline()
+                        .lineLimit(2)
+                        .truncationMode(.middle)
+                        .multilineTextAlignment(.center)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Text(eventShareLink)
+                    .font(.caption2.monospaced())
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .truncationMode(.middle)
+                    .multilineTextAlignment(.center)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(16)
@@ -1094,6 +1111,8 @@ struct AppointmentDetailView: View {
 
     private var participantsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
+            Text("Участники")
+                .fontWeight(.medium)
             ParticipantTagFilter(
                 selectedTags: viewModel.participantFilterTags,
                 onToggle: { tag in
