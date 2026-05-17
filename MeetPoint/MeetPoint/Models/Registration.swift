@@ -21,32 +21,63 @@ enum position: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-enum Tag: String, CaseIterable, Identifiable {
-    case frontend
-    case backend
-    case mobile
-    case ai
-    case fintech
-    case career
-    case analitic
-    case startup
-    
-    var id: String { rawValue }
+struct Tag: RawRepresentable, CaseIterable, Identifiable, Hashable {
+    let rawValue: String
+
+    static let frontend = Tag(rawValue: "frontend")
+    static let backend = Tag(rawValue: "backend")
+    static let mobile = Tag(rawValue: "mobile")
+    static let ai = Tag(rawValue: "ai")
+    static let fintech = Tag(rawValue: "fintech")
+    static let career = Tag(rawValue: "career")
+    static let analitic = Tag(rawValue: "analitic")
+    static let startup = Tag(rawValue: "startup")
+
+    static let allCases: [Tag] = [
+        .frontend,
+        .backend,
+        .mobile,
+        .ai,
+        .fintech,
+        .career,
+        .analitic,
+        .startup
+    ]
+
+    var id: String { apiValue.lowercased() }
+
+    init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    static func == (lhs: Tag, rhs: Tag) -> Bool {
+        lhs.apiValue.caseInsensitiveCompare(rhs.apiValue) == .orderedSame
+    }
 }
 
 extension Tag {
     /// Значение, которое ожидает/возвращает сервер.
     var apiValue: String {
-        switch self {
-        case .analitic:
+        let trimmed = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.lowercased() == "analitic" {
             return "analytic"
-        default:
-            return rawValue
         }
+        return trimmed
+    }
+
+    var isPredefined: Bool {
+        Self.allCases.contains(self)
     }
 
     init?(apiValue: String) {
-        let normalized = apiValue.lowercased()
+        let trimmed = apiValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        let normalized = trimmed.lowercased()
         switch normalized {
         case "frontend": self = .frontend
         case "backend": self = .backend
@@ -56,7 +87,7 @@ extension Tag {
         case "career": self = .career
         case "analytic", "analitic": self = .analitic
         case "startup": self = .startup
-        default: return nil
+        default: self = Tag(rawValue: trimmed)
         }
     }
 }

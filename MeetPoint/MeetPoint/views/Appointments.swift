@@ -808,6 +808,7 @@ struct AppointmentDetailView: View {
         .sheet(isPresented: $showJoinTagsSheet) {
             JoinTagsSheet(
                 selectedTags: $joinTags,
+                availableTags: displayedAppointment.tags,
                 isSaving: viewModel.isRegistering,
                 onConfirm: {
                     QoSRunner.fireAndForgetUserInitiated {
@@ -942,9 +943,16 @@ struct AppointmentDetailView: View {
 
     private struct JoinTagsSheet: View {
         @Binding var selectedTags: Set<Tag>
+        let availableTags: [Tag]
         let isSaving: Bool
         let onConfirm: () -> Void
         let onCancel: () -> Void
+
+        private var customAvailableTags: [Tag] {
+            availableTags
+                .filter { !$0.isPredefined }
+                .sorted { $0.rawValue.localizedCaseInsensitiveCompare($1.rawValue) == .orderedAscending }
+        }
 
         var body: some View {
             NavigationStack {
@@ -958,6 +966,21 @@ struct AppointmentDetailView: View {
                         .foregroundStyle(.secondary)
 
                     customTags(tags: $selectedTags)
+
+                    if !customAvailableTags.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Теги мероприятия")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(Color.appPurple)
+
+                            FlowLayout(spacing: 8) {
+                                ForEach(customAvailableTags) { tag in
+                                    customTagButton(tag)
+                                }
+                            }
+                        }
+                    }
 
                     if selectedTags.isEmpty {
                         Text("Нужно выбрать хотя бы один тег")
@@ -999,6 +1022,34 @@ struct AppointmentDetailView: View {
             }
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
+        }
+
+        private func customTagButton(_ tag: Tag) -> some View {
+            let isSelected = selectedTags.contains(tag)
+            return Button {
+                if isSelected {
+                    selectedTags.remove(tag)
+                } else {
+                    selectedTags.insert(tag)
+                }
+            } label: {
+                Text(tag.rawValue)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .lineLimit(1)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .foregroundStyle(isSelected ? Color.appPurple : .primary)
+                    .background(
+                        Capsule()
+                            .fill(isSelected ? Color.appYellow : Color.appMutedSurface)
+                    )
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.appLightPurple.opacity(0.5), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
         }
     }
 

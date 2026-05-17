@@ -300,7 +300,7 @@ final class AppointmentDetailViewModel: ObservableObject {
         }
 
         // Backend can occasionally ignore tag filtering; keep client behavior stable.
-        let normalizedSelectedTags = Set(filterTags.map { $0.rawValue.lowercased() })
+        let normalizedSelectedTags = Set(filterTags.map { $0.apiValue.lowercased() })
         let filteredDTOs = dtos.filter { participant in
             let participantTags = Set(participant.tags.map { $0.lowercased() })
             return !participantTags.isDisjoint(with: normalizedSelectedTags)

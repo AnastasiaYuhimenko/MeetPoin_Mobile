@@ -24,6 +24,7 @@ final class CreateEventViewModel: ObservableObject {
     @Published var date: Date = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
     @Published var eventDescription: String = ""
     @Published var selectedTags: Set<Tag> = []
+    @Published var customTagInput: String = ""
 
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -38,6 +39,17 @@ final class CreateEventViewModel: ObservableObject {
             && date > Date()
     }
 
+    var customSelectedTags: [Tag] {
+        selectedTags
+            .filter { !$0.isPredefined }
+            .sorted { $0.rawValue.localizedCaseInsensitiveCompare($1.rawValue) == .orderedAscending }
+    }
+
+    var canAddCustomTag: Bool {
+        guard let tag = normalizedCustomTag else { return false }
+        return !selectedTags.contains(tag)
+    }
+
     func createEvent() async {
         guard isFormValid else { return }
 
@@ -49,7 +61,7 @@ final class CreateEventViewModel: ObservableObject {
             name: name.trimmingCharacters(in: .whitespacesAndNewlines),
             date: date,
             description: eventDescription.trimmingCharacters(in: .whitespacesAndNewlines),
-            tags: selectedTags.map { $0.apiValue }
+            tags: selectedTags.map(\.apiValue).sorted()
         )
 
         let resource = Resource<EventResponseDTO, CreateEventRequest>(
@@ -78,11 +90,33 @@ final class CreateEventViewModel: ObservableObject {
         date = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
         eventDescription = ""
         selectedTags = []
+        customTagInput = ""
         createdEvent = nil
         errorMessage = nil
     }
 
+    func addCustomTag() {
+        guard let tag = normalizedCustomTag else { return }
+        selectedTags.insert(tag)
+        customTagInput = ""
+    }
+
+    func removeCustomTag(_ tag: Tag) {
+        selectedTags.remove(tag)
+    }
+
     // MARK: - Helpers
+
+    private var normalizedCustomTag: Tag? {
+        let words = customTagInput
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+
+        guard !words.isEmpty else { return nil }
+        return Tag(apiValue: words.joined(separator: " "))
+    }
 
     private func friendlyMessage(for error: Error) -> String {
         if let serviceError = error as? URLServiceError {

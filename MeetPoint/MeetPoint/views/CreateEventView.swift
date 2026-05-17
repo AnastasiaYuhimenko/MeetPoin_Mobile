@@ -138,12 +138,80 @@ struct CreateEventView: View {
         VStack(alignment: .leading, spacing: 12) {
             sectionLabel("Теги", systemImage: "tag")
             customTags(tags: $viewModel.selectedTags)
+            customTagInput
+            customSelectedTags
             if viewModel.selectedTags.isEmpty {
                 Text("Выберите хотя бы один тег")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private var customTagInput: some View {
+        HStack(spacing: 10) {
+            TextField("Добавить свой тег", text: $viewModel.customTagInput)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.done)
+                .onSubmit {
+                    viewModel.addCustomTag()
+                }
+                .padding(.horizontal, 14)
+                .frame(height: 44)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.appPurple, lineWidth: 1)
+                )
+
+            Button {
+                viewModel.addCustomTag()
+            } label: {
+                Image(systemName: "plus")
+                    .font(.headline)
+                    .foregroundStyle(Color.appPurple)
+                    .frame(width: 44, height: 44)
+                    .background(Color.appYellow)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .disabled(!viewModel.canAddCustomTag)
+            .opacity(viewModel.canAddCustomTag ? 1 : 0.5)
+        }
+    }
+
+    @ViewBuilder
+    private var customSelectedTags: some View {
+        if !viewModel.customSelectedTags.isEmpty {
+            FlowLayout(spacing: 8) {
+                ForEach(viewModel.customSelectedTags) { tag in
+                    customTagPill(tag)
+                }
+            }
+        }
+    }
+
+    private func customTagPill(_ tag: Tag) -> some View {
+        HStack(spacing: 6) {
+            Text(tag.rawValue)
+                .font(.caption)
+                .fontWeight(.medium)
+                .lineLimit(1)
+
+            Button {
+                viewModel.removeCustomTag(tag)
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.caption2)
+                    .fontWeight(.bold)
+            }
+            .buttonStyle(.plain)
+        }
+        .foregroundStyle(Color.appPurple)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color.appLightPurple.opacity(0.15))
+        .clipShape(Capsule())
+        .overlay(Capsule().stroke(Color.appLightPurple.opacity(0.5), lineWidth: 1))
     }
 
     private var submitButton: some View {
