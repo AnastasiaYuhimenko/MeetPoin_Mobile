@@ -26,49 +26,55 @@ struct AboutContacts: View {
     }
 
     var body: some View {
-        VStack {
-            Text("Добавьте хотябы один ")
-                .font(.title)
-                .fontWeight(.bold)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
-                .padding(.top, 30)
-            Text("контакт")
-                .font(.title)
-                .fontWeight(.bold)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
-                .padding(.bottom, 30)
+        GeometryReader { geo in
+            ScrollView {
+                VStack {
+                    Text("Добавьте хотябы один ")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+                        .padding(.top, 30)
+                    Text("контакт")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+                        .padding(.bottom, 30)
 
-            Image("phoneCall")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 300, height: 300)
-            VStack {
-                CustomTextField(text: $userEmail, placeholderText: "Email")
-                
-                FlowLayout(spacing: 6) {
-                    ValidationHint(text: "Формат: name@mail.com", isValid: isEmailValid, isEmpty: userEmail.isEmpty)
-                }
-                .padding(.top, 6)
-                
-                CustomTextField(text: $userTelegramm, placeholderText: "Telegram")
-                    .padding(.top, 8)
-                
-                FlowLayout(spacing: 6) {
-                    ValidationHint(text: "Начинается с @", isValid: isTelegramValid, isEmpty: userTelegramm.isEmpty)
-                }
-                .padding(.top, 6)
+                    Image("phoneCall")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 300, height: 300)
+                    VStack {
+                        CustomTextField(text: $userEmail, placeholderText: "Email")
 
-                
-                Spacer()
-                customButton(text: "Продолжить", action: next)
-                    .opacity(canProceed ? 1 : 0.4)
-                    .disabled(!canProceed)
-                    .padding(.bottom, 40)
+                        FlowLayout(spacing: 6) {
+                            ValidationHint(text: "Формат: name@mail.com", isValid: isEmailValid, isEmpty: userEmail.isEmpty)
+                        }
+                        .padding(.top, 6)
+
+                        CustomTextField(text: $userTelegramm, placeholderText: "Telegram")
+                            .padding(.top, 8)
+
+                        FlowLayout(spacing: 6) {
+                            ValidationHint(text: "Начинается с @", isValid: isTelegramValid, isEmpty: userTelegramm.isEmpty)
+                        }
+                        .padding(.top, 6)
+
+                        Spacer()
+                        customButton(text: "Продолжить", action: next)
+                            .opacity(canProceed ? 1 : 0.4)
+                            .disabled(!canProceed)
+                            .padding(.bottom, 40)
+                    }
+                    .offset(y: -20)
+                }
+                .frame(maxWidth: .infinity, minHeight: geo.size.height)
+                .padding()
+                .padding(.bottom, 24)
             }
-            .offset(y: -20)
+            .scrollDismissesKeyboard(.interactively)
         }
-        .padding()
     }
 }
