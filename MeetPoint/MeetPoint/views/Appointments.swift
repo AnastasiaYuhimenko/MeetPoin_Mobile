@@ -55,7 +55,7 @@ struct TagPill: View {
             .fixedSize(horizontal: true, vertical: true)
             .layoutPriority(3)
             .truncationMode(.tail)
-            .frame(minWidth: 72, minHeight: 28)
+            .frame(minWidth: 72, minHeight: 10)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
             .background(Color.appLightPurple.opacity(0.15))

@@ -28,11 +28,11 @@ struct customTags: View {
                 } label: {
                     Text(tag.rawValue)
                         .multilineTextAlignment(.center)
-                        .lineLimit(2)
+                        .lineLimit(1)
                         .truncationMode(.tail)
                         .layoutPriority(1)
                         .frame(maxWidth: .infinity, minHeight: 44)
-                        .padding(.vertical, 10)
+                        .padding(.vertical, 5)
                         .background(
                             isSelected
                             ? Color.appYellow
