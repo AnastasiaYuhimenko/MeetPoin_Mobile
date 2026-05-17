@@ -1,0 +1,38 @@
+included:
+  - MeetPoint/MeetPoint
+
+excluded:
+  - MeetPoint/MeetPoint.xcodeproj
+  - DerivedData
+  - build
+  - Scripts
+
+disabled_rules:
+  - trailing_whitespace
+  - line_length
+  - todo
+  - identifier_name
+  - type_name
+  - file_length
+  - type_body_file_length
+  - function_body_length
+  - cyclomatic_complexity
+  - nesting
+  - large_tuple
+  - force_cast
+  - force_try
+  - opening_brace
+
+opt_in_rules:
+  - empty_count
+  - empty_string
+  - explicit_init
+  - first_where
+  - last_where
+  - prefer_self_type_over_type_of_self
+  - redundant_nil_coalescing
+  - sorted_first_last
+  - toggle_bool
+  - unused_import
+
+reporter: "emoji"

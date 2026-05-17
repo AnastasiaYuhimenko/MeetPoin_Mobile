@@ -1,0 +1,49 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "display-p3:0.31781,0.13260,0.22897,1.00000",
+      "display-p3:0.10016,0.04674,0.13344,1.00000"
+    ],
+    "orientation" : {
+      "start" : {
+        "x" : 0.5,
+        "y" : 0
+      },
+      "stop" : {
+        "x" : 0.5,
+        "y" : 0.7
+      }
+    }
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "favicon.png",
+          "name" : "favicon",
+          "position" : {
+            "scale" : 2,
+            "translation-in-points" : [
+              0,
+              25.929287461990043
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

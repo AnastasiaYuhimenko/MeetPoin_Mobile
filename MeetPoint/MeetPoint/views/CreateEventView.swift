@@ -1,0 +1,195 @@
+//
+//  CreateEventView.swift
+//  MeetPoint
+//
+//  Created by Anastasia Yukhimenko on 16.05.2026.
+//
+
+import SwiftUI
+
+struct CreateEventView: View {
+
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var viewModel = CreateEventViewModel()
+
+    @State private var navigateToQR = false
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.appBackground
+                    .ignoresSafeArea()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        header
+
+                        nameField
+                        dateField
+                        descriptionField
+                        tagsSection
+
+                        Spacer(minLength: 8)
+
+                        submitButton
+                            .padding(.top, 8)
+                    }
+                    .padding(20)
+                }
+            }
+            .navigationTitle("Новое мероприятие")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Отмена") { dismiss() }
+                        .foregroundStyle(Color.appPurple)
+                }
+            }
+            .errorToast($viewModel.errorMessage)
+            .navigationDestination(isPresented: $navigateToQR) {
+                if let event = viewModel.createdEvent {
+                    EventQRView(event: event) {
+                        dismiss()
+                    }
+                }
+            }
+            .onChange(of: viewModel.createdEvent) { _, newValue in
+                if newValue != nil {
+                    navigateToQR = true
+                }
+            }
+            .scrollDismissesKeyboard(.interactively)
+        }
+    }
+
+    // MARK: - Sections
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Создайте мероприятие")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundStyle(Color.appPurple)
+            Text("Заполните данные — после создания вы получите QR-код со ссылкой для участников.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var nameField: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionLabel("Название", systemImage: "textformat")
+            CustomTextField(
+                text: $viewModel.name,
+                placeholderText: "Например, Хакатон Промразработки"
+            )
+        }
+    }
+
+    private var dateField: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionLabel("Дата и время", systemImage: "calendar")
+            DatePicker(
+                "",
+                selection: $viewModel.date,
+                in: Date()...,
+                displayedComponents: [.date, .hourAndMinute]
+            )
+            .labelsHidden()
+            .datePickerStyle(.compact)
+            .environment(\.locale, Locale(identifier: "ru_RU"))
+            .tint(Color.appPurple)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.appPurple, lineWidth: 1)
+            )
+        }
+    }
+
+    private var descriptionField: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionLabel("Описание", systemImage: "text.alignleft")
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.appPurple, lineWidth: 1)
+                    .frame(minHeight: 120)
+
+                TextEditor(text: $viewModel.eventDescription)
+                    .frame(minHeight: 120)
+                    .scrollContentBackground(.hidden)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+
+                if viewModel.eventDescription.isEmpty {
+                    Text("Расскажите о мероприятии, формате и для кого оно")
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 17)
+                        .padding(.vertical, 16)
+                        .allowsHitTesting(false)
+                }
+            }
+        }
+    }
+
+    private var tagsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionLabel("Теги", systemImage: "tag")
+            customTags(tags: $viewModel.selectedTags)
+            if viewModel.selectedTags.isEmpty {
+                Text("Выберите хотя бы один тег")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var submitButton: some View {
+        HStack {
+            Spacer()
+            Button {
+                QoSRunner.fireAndForgetUserInitiated {
+                    await viewModel.createEvent()
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .tint(Color.appPurple)
+                    }
+                    Text(viewModel.isLoading ? "Создаём..." : "Создать мероприятие")
+                        .fontWeight(.semibold)
+                }
+                .foregroundStyle(Color.appPurple)
+                .frame(width: 260, height: 50)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .foregroundStyle(Color.appYellow)
+                )
+            }
+            .disabled(!viewModel.isFormValid || viewModel.isLoading)
+            .opacity((viewModel.isFormValid && !viewModel.isLoading) ? 1 : 0.5)
+            Spacer()
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func sectionLabel(_ text: String, systemImage: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: systemImage)
+                .font(.caption)
+                .foregroundStyle(Color.appLightPurple)
+            Text(text)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(Color.appPurple)
+        }
+    }
+}
+
+#Preview {
+    CreateEventView()
+}
