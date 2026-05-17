@@ -34,6 +34,7 @@ struct RequestsView: View {
                     await viewModel.loadRequests()
                 }
             }
+            .errorToast($viewModel.error)
             .sheet(item: $selectedUser) { user in
                 VStack {
                     UserCellSheet(user: user, isFriend: false, hasOffer: true)

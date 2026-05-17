@@ -92,7 +92,7 @@ final class ProfileViewModel: ObservableObject {
             apply(profile)
             hasLoaded = true
         } catch {
-            self.error = friendlyMessage(for: error)
+            self.error = UserFacingNetworkMessage.message(for: error, context: .profile)
         }
     }
 
@@ -119,7 +119,7 @@ final class ProfileViewModel: ObservableObject {
             try await updateProfile(updateDto)
             successMessage = "Профиль сохранён"
         } catch {
-            self.error = friendlyMessage(for: error)
+            self.error = UserFacingNetworkMessage.message(for: error, context: .profile)
         }
     }
 
@@ -170,74 +170,6 @@ final class ProfileViewModel: ObservableObject {
         )
     }
 
-    private func friendlyMessage(for error: Error) -> String {
-        if let serviceError = error as? URLServiceError {
-            switch serviceError {
-            case .badStatusCode(let code, let data):
-                let serverDetail = parseServerDetail(from: data)
-                switch code {
-                case 401: return serverDetail ?? "Сессия истекла, войдите снова"
-                case 404: return serverDetail ?? "Обновление профиля недоступно на сервере"
-                case 422: return serverDetail ?? "Проверьте введённые данные"
-                default:
-                    return serverDetail.map { "Ошибка \(code): \($0)" } ?? "Ошибка сервера (\(code))"
-                }
-            case .invalidURL:
-                return "Ошибка конфигурации приложения"
-            }
-        }
-
-        if let urlError = error as? URLError {
-            switch urlError.code {
-            case .notConnectedToInternet, .dataNotAllowed:
-                return "Нет интернет-соединения"
-            case .timedOut:
-                return "Превышено время ожидания"
-            case .cannotConnectToHost, .cannotFindHost:
-                return "Не удаётся подключиться к серверу"
-            default:
-                break
-            }
-        }
-
-        return error.localizedDescription
-    }
-
-    private func parseServerDetail(from data: Data) -> String? {
-        struct Envelope: Decodable {
-            let detail: RawDetail
-
-            enum RawDetail: Decodable {
-                case text(String)
-                case list([Item])
-                struct Item: Decodable { let msg: String }
-
-                init(from decoder: Decoder) throws {
-                    let container = try decoder.singleValueContainer()
-                    if let value = try? container.decode(String.self) {
-                        self = .text(value)
-                        return
-                    }
-                    if let items = try? container.decode([Item].self) {
-                        self = .list(items)
-                        return
-                    }
-                    throw DecodingError.typeMismatch(
-                        RawDetail.self,
-                        .init(codingPath: decoder.codingPath, debugDescription: "unexpected detail type")
-                    )
-                }
-
-                var message: String {
-                    switch self {
-                    case .text(let value): return value
-                    case .list(let items): return items.map(\.msg).joined(separator: "\n")
-                    }
-                }
-            }
-        }
-        return (try? JSONDecoder().decode(Envelope.self, from: data))?.detail.message
-    }
 }
 
 private struct ProfileSnapshot: Equatable {

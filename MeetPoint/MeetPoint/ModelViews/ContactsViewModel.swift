@@ -33,7 +33,7 @@ final class ContactsViewModel: ObservableObject {
             contacts = dtos.map { $0.toUser() }
             hasLoaded = true
         } catch {
-            self.error = error.localizedDescription
+            self.error = UserFacingNetworkMessage.message(for: error, context: .apiAction)
         }
     }
 }

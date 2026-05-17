@@ -48,11 +48,7 @@ struct QRScannerView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .navigationTitle("Сканировать QR")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Ошибка камеры", isPresented: errorAlertBinding) {
-            Button("Ок", role: .cancel) { scanError = nil }
-        } message: {
-            Text(scanError ?? "")
-        }
+        .errorToast($scanError)
     }
 
     // MARK: - Subviews
@@ -110,13 +106,6 @@ struct QRScannerView: View {
     }
 
     // MARK: - Helpers
-
-    private var errorAlertBinding: Binding<Bool> {
-        Binding(
-            get: { scanError != nil },
-            set: { if !$0 { scanError = nil } }
-        )
-    }
 
     private func handle(code: String) {
         guard !hasScanned else { return }
@@ -272,7 +261,7 @@ final class QRScannerViewController: UIViewController {
             }
         } catch {
             DispatchQueue.main.async { [weak self] in
-                self?.onError?(error.localizedDescription)
+                self?.onError?("Не удалось запустить камеру")
             }
         }
     }

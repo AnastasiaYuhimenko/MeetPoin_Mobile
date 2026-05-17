@@ -65,7 +65,7 @@ final class AppointmentsViewModel: ObservableObject {
             applyFilters()
             hasLoaded = true
         } catch {
-            self.error = error.localizedDescription
+            self.error = UserFacingNetworkMessage.message(for: error, context: .appointmentsList)
         }
     }
 
@@ -89,7 +89,7 @@ final class AppointmentsViewModel: ObservableObject {
             }
             return appointment
         } catch {
-            self.error = "Мероприятие не найдено"
+            self.error = UserFacingNetworkMessage.message(for: error, context: .joinAppointment)
             return nil
         }
     }

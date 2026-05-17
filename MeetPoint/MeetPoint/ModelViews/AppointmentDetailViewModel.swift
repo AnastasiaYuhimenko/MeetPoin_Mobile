@@ -99,7 +99,7 @@ final class AppointmentDetailViewModel: ObservableObject {
             loadedParticipants = try await participantsTask.value
         } catch {
             loadedParticipants = []
-            self.error = error.localizedDescription
+            self.error = UserFacingNetworkMessage.message(for: error, context: .apiAction)
         }
 
         let snapshot = await DetailLoadSnapshot(
@@ -142,7 +142,7 @@ final class AppointmentDetailViewModel: ObservableObject {
             didRegister = true
             try await updateMyTags(appointmentId: appointmentId, tags: tags)
         } catch {
-            self.error = friendlyMessage(for: error)
+            self.error = UserFacingNetworkMessage.message(for: error, context: .joinAppointment)
         }
 
         if didRegister {
@@ -165,7 +165,7 @@ final class AppointmentDetailViewModel: ObservableObject {
             connectionStatuses[toUserId] = status
             requestsSentTo.insert(toUserId)
         } catch {
-            self.error = error.localizedDescription
+            self.error = UserFacingNetworkMessage.message(for: error, context: .apiAction)
         }
     }
 
@@ -192,7 +192,7 @@ final class AppointmentDetailViewModel: ObservableObject {
                 requestId: dto.requestId
             )
         } catch {
-            self.error = error.localizedDescription
+            self.error = UserFacingNetworkMessage.message(for: error, context: .apiAction)
         }
     }
 
@@ -229,7 +229,7 @@ final class AppointmentDetailViewModel: ObservableObject {
                 filterTags: filterTags
             )
         } catch {
-            self.error = error.localizedDescription
+            self.error = UserFacingNetworkMessage.message(for: error, context: .apiAction)
         }
     }
 
@@ -313,83 +313,5 @@ final class AppointmentDetailViewModel: ObservableObject {
             request: GetAppointmentStatsRequest(appointmentId: appointmentId)
         )
         return (try? await NetworkTask.fetch(service, resource: resource))?.toStats()
-    }
-
-    private func friendlyMessage(for error: Error) -> String {
-        if let serviceError = error as? URLServiceError {
-            switch serviceError {
-            case .badStatusCode(let code, let data):
-                let detail = parseServerDetail(from: data)
-                switch code {
-                case 400:
-                    return detail ?? "Не удалось присоединиться: выберите только теги этого мероприятия"
-                case 401:
-                    return detail ?? "Войдите, чтобы присоединиться к мероприятию"
-                case 403:
-                    return detail ?? "Нет доступа к этому мероприятию"
-                case 404:
-                    return detail ?? "Мероприятие не найдено"
-                case 422:
-                    return detail ?? "Проверьте выбранные теги"
-                default:
-                    return detail.map { "Ошибка \(code): \($0)" } ?? "Ошибка сервера (\(code))"
-                }
-            case .invalidURL:
-                return "Ошибка конфигурации приложения"
-            }
-        }
-
-        if let urlError = error as? URLError {
-            switch urlError.code {
-            case .notConnectedToInternet, .dataNotAllowed:
-                return "Нет интернет-соединения"
-            case .timedOut:
-                return "Превышено время ожидания"
-            case .cannotConnectToHost, .cannotFindHost:
-                return "Не удаётся подключиться к серверу"
-            default:
-                break
-            }
-        }
-
-        return error.localizedDescription
-    }
-
-    private func parseServerDetail(from data: Data) -> String? {
-        struct Envelope: Decodable {
-            let detail: RawDetail
-
-            enum RawDetail: Decodable {
-                case text(String)
-                case list([Item])
-
-                struct Item: Decodable { let msg: String }
-
-                init(from decoder: Decoder) throws {
-                    let container = try decoder.singleValueContainer()
-                    if let text = try? container.decode(String.self) {
-                        self = .text(text)
-                        return
-                    }
-                    if let items = try? container.decode([Item].self) {
-                        self = .list(items)
-                        return
-                    }
-                    throw DecodingError.typeMismatch(
-                        RawDetail.self,
-                        .init(codingPath: decoder.codingPath, debugDescription: "unexpected detail type")
-                    )
-                }
-
-                var message: String {
-                    switch self {
-                    case .text(let text): return text
-                    case .list(let items): return items.map(\.msg).joined(separator: "\n")
-                    }
-                }
-            }
-        }
-
-        return (try? JSONDecoder().decode(Envelope.self, from: data))?.detail.message
     }
 }

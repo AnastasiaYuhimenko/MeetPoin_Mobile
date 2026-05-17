@@ -34,6 +34,7 @@ struct ContactsView: View {
                     await viewModel.loadContacts()
                 }
             }
+            .errorToast($viewModel.error)
             .sheet(item: $selectedUser) { user in
                 VStack {
                     UserCellSheet(user: user, isFriend: true, hasOffer: false)

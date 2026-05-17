@@ -87,5 +87,5 @@ extension View {
         Text("Контент под баннером")
         Spacer()
     }
-    .errorToast(.constant("Внутренняя ошибка сервера (500): database connection failed"))
+    .errorToast(.constant("Сервис временно недоступен. Попробуйте позже"))
 }

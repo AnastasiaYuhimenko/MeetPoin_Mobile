@@ -30,14 +30,7 @@ struct ProfileView: View {
                     await viewModel.loadProfile()
                 }
             }
-            .alert("Ошибка", isPresented: Binding(
-                get: { viewModel.error != nil },
-                set: { if !$0 { viewModel.error = nil } }
-            )) {
-                Button("OK", role: .cancel) { viewModel.error = nil }
-            } message: {
-                Text(viewModel.error ?? "")
-            }
+            .errorToast($viewModel.error)
             .alert("Готово", isPresented: Binding(
                 get: { viewModel.successMessage != nil },
                 set: { if !$0 { viewModel.successMessage = nil } }

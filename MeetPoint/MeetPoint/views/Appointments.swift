@@ -214,8 +214,8 @@ struct Appointments: View {
                 if viewModel.isLoading && viewModel.totalAppointmentsCount == 0 {
                     ProgressView("Загружаем мероприятия...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let error = viewModel.error, viewModel.totalAppointmentsCount == 0 {
-                    errorState(message: error)
+                } else if viewModel.error != nil, viewModel.totalAppointmentsCount == 0 {
+                    errorState
                 } else if viewModel.totalAppointmentsCount == 0 {
                     emptyState
                 } else {
@@ -317,6 +317,7 @@ struct Appointments: View {
                     }
                 }
             }
+            .errorToast($viewModel.error)
         }
     }
 
@@ -456,8 +457,7 @@ struct Appointments: View {
         }
     }
 
-    @ViewBuilder
-    private func errorState(message: String) -> some View {
+    private var errorState: some View {
         ScrollView {
             VStack(spacing: 16) {
                 Image(systemName: "wifi.slash")
@@ -466,7 +466,7 @@ struct Appointments: View {
                 Text("Не удалось загрузить")
                     .font(.headline)
                     .foregroundStyle(Color.appPurple)
-                Text(message)
+                Text("Причина показана в уведомлении сверху")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -829,14 +829,7 @@ struct AppointmentDetailView: View {
             )
         }
         .task { await viewModel.loadData(appointmentId: displayedAppointment.id) }
-        .alert("Ошибка", isPresented: Binding(
-            get: { viewModel.error != nil },
-            set: { if !$0 { viewModel.error = nil } }
-        )) {
-            Button("OK", role: .cancel) { viewModel.error = nil }
-        } message: {
-            Text(viewModel.error ?? "")
-        }
+        .errorToast($viewModel.error)
         .sheet(item: $selectedUser) { user in
             let fallbackStatus: ConnectionStatusState? = {
                 guard let id = user.id else { return nil }

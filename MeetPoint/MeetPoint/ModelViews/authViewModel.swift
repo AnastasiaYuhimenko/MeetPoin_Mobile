@@ -80,7 +80,7 @@ class AuthViewModel: ObservableObject {
             _ = try await NetworkTask.fetch(service, resource: resource)
             await auth(userName: user.userName, password: user.password)
         } catch {
-            errorMessage = friendlyMessage(for: error)
+            errorMessage = UserFacingNetworkMessage.message(for: error, context: .authentication)
             isLoading = false
         }
     }
@@ -101,7 +101,7 @@ class AuthViewModel: ObservableObject {
             accessToken = response.accessToken
             isLoggedIn = true
         } catch {
-            errorMessage = friendlyMessage(for: error)
+            errorMessage = UserFacingNetworkMessage.message(for: error, context: .authentication)
         }
 
         isLoading = false
@@ -116,72 +116,4 @@ class AuthViewModel: ObservableObject {
         errorMessage = nil
     }
 
-    // MARK: - Helpers
-
-    private func friendlyMessage(for error: Error) -> String {
-        if let serviceError = error as? URLServiceError {
-            switch serviceError {
-            case .badStatusCode(let code, let data):
-                let serverDetail = parseServerDetail(from: data)
-                switch code {
-                case 401: return serverDetail ?? "Неверный логин или пароль"
-                case 409: return serverDetail ?? "Пользователь с таким именем уже существует"
-                case 422: return serverDetail ?? "Проверьте введённые данные"
-                case 500: return "Внутренняя ошибка сервера (500)\(serverDetail.map { ": \($0)" } ?? "")"
-                case 502: return "Плохой шлюз (502)\(serverDetail.map { ": \($0)" } ?? "")"
-                case 503: return "Сервис недоступен (503)\(serverDetail.map { ": \($0)" } ?? "")"
-                case 504: return "Шлюз не отвечает (504)"
-                default:  return serverDetail.map { "Ошибка \(code): \($0)" } ?? "Ошибка сервера (\(code))"
-                }
-            case .invalidURL:
-                return "Ошибка конфигурации приложения"
-            }
-        }
-
-        if let urlError = error as? URLError {
-            switch urlError.code {
-            case .notConnectedToInternet, .dataNotAllowed:
-                return "Нет интернет-соединения"
-            case .timedOut:
-                return "Превышено время ожидания"
-            case .cannotConnectToHost, .cannotFindHost:
-                return "Не удаётся подключиться к серверу"
-            default:
-                break
-            }
-        }
-
-        return error.localizedDescription
-    }
-
-    /// Парсит поле `detail` из JSON-тела ответа FastAPI.
-    private func parseServerDetail(from data: Data) -> String? {
-        struct Envelope: Decodable {
-            let detail: RawDetail
-
-            enum RawDetail: Decodable {
-                case text(String)
-                case list([Item])
-                struct Item: Decodable { let msg: String }
-
-                init(from decoder: Decoder) throws {
-                    let c = try decoder.singleValueContainer()
-                    if let s = try? c.decode(String.self) { self = .text(s); return }
-                    if let a = try? c.decode([Item].self) { self = .list(a); return }
-                    throw DecodingError.typeMismatch(
-                        RawDetail.self,
-                        .init(codingPath: decoder.codingPath, debugDescription: "unexpected detail type")
-                    )
-                }
-
-                var message: String {
-                    switch self {
-                    case .text(let s): return s
-                    case .list(let items): return items.map(\.msg).joined(separator: "\n")
-                    }
-                }
-            }
-        }
-        return (try? JSONDecoder().decode(Envelope.self, from: data))?.detail.message
-    }
 }

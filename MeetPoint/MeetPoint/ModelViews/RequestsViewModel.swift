@@ -47,7 +47,7 @@ final class RequestsViewModel: ObservableObject {
             }
             hasLoaded = true
         } catch {
-            self.error = error.localizedDescription
+            self.error = UserFacingNetworkMessage.message(for: error, context: .apiAction)
         }
     }
 
@@ -59,7 +59,7 @@ final class RequestsViewModel: ObservableObject {
             _ = try await NetworkTask.fetch(service, resource: resource)
             withAnimation { requests.removeAll { $0.id == requestId } }
         } catch {
-            self.error = error.localizedDescription
+            self.error = UserFacingNetworkMessage.message(for: error, context: .apiAction)
         }
     }
 
@@ -71,7 +71,7 @@ final class RequestsViewModel: ObservableObject {
             _ = try await NetworkTask.fetch(service, resource: resource)
             withAnimation { requests.removeAll { $0.id == requestId } }
         } catch {
-            self.error = error.localizedDescription
+            self.error = UserFacingNetworkMessage.message(for: error, context: .apiAction)
         }
     }
 }

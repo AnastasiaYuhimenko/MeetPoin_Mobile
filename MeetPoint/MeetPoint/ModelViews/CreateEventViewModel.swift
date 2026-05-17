@@ -81,7 +81,7 @@ final class CreateEventViewModel: ObservableObject {
                 adminToken: response.adminToken
             )
         } catch {
-            errorMessage = friendlyMessage(for: error)
+            errorMessage = UserFacingNetworkMessage.message(for: error, context: .createEvent)
         }
     }
 
@@ -105,8 +105,6 @@ final class CreateEventViewModel: ObservableObject {
         selectedTags.remove(tag)
     }
 
-    // MARK: - Helpers
-
     private var normalizedCustomTag: Tag? {
         let words = customTagInput
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -119,58 +117,4 @@ final class CreateEventViewModel: ObservableObject {
         return Tag(apiValue: words.joined(separator: "-"))
     }
 
-    private func friendlyMessage(for error: Error) -> String {
-        if let serviceError = error as? URLServiceError {
-            switch serviceError {
-            case .badStatusCode(let code, let data):
-                let detail = parseServerDetail(from: data)
-                switch code {
-                case 400: return detail ?? "Проверьте теги: используйте короткие названия без спецсимволов"
-                case 401: return detail ?? "Войдите, чтобы создавать мероприятия"
-                case 422: return detail ?? "Проверьте введённые данные"
-                case 500: return "Внутренняя ошибка сервера (500)\(detail.map { ": \($0)" } ?? "")"
-                case 502, 503, 504: return "Сервис временно недоступен"
-                default:  return detail.map { "Ошибка \(code): \($0)" } ?? "Ошибка сервера (\(code))"
-                }
-            case .invalidURL:
-                return "Ошибка конфигурации приложения"
-            }
-        }
-        if let urlError = error as? URLError {
-            switch urlError.code {
-            case .notConnectedToInternet, .dataNotAllowed: return "Нет интернет-соединения"
-            case .timedOut: return "Превышено время ожидания"
-            case .cannotConnectToHost, .cannotFindHost: return "Не удаётся подключиться к серверу"
-            default: break
-            }
-        }
-        return error.localizedDescription
-    }
-
-    private func parseServerDetail(from data: Data) -> String? {
-        struct Envelope: Decodable {
-            let detail: RawDetail
-            enum RawDetail: Decodable {
-                case text(String)
-                case list([Item])
-                struct Item: Decodable { let msg: String }
-                init(from decoder: Decoder) throws {
-                    let c = try decoder.singleValueContainer()
-                    if let s = try? c.decode(String.self) { self = .text(s); return }
-                    if let a = try? c.decode([Item].self) { self = .list(a); return }
-                    throw DecodingError.typeMismatch(
-                        RawDetail.self,
-                        .init(codingPath: decoder.codingPath, debugDescription: "unexpected detail type")
-                    )
-                }
-                var message: String {
-                    switch self {
-                    case .text(let s): return s
-                    case .list(let items): return items.map(\.msg).joined(separator: "\n")
-                    }
-                }
-            }
-        }
-        return (try? JSONDecoder().decode(Envelope.self, from: data))?.detail.message
-    }
 }
