@@ -30,10 +30,13 @@ struct MeetPointApp: App {
             .environmentObject(authViewModel)
             .environmentObject(deepLinkRouter)
             .onOpenURL { url in
-                deepLinkRouter.handle(url: url)
+                Task { @MainActor in
+                    deepLinkRouter.handle(url: url)
+                }
             }
             .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
-                if let url = activity.webpageURL {
+                guard let url = activity.webpageURL else { return }
+                Task { @MainActor in
                     deepLinkRouter.handle(url: url)
                 }
             }
