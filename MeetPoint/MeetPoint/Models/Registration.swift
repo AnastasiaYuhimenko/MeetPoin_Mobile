@@ -94,6 +94,8 @@ extension Tag {
 
 struct User: Identifiable {
     let id: UUID?
+    /// Отображаемое имя с бэкенда (`name`), опционально при регистрации.
+    let name: String?
     let userName: String
     let position: position
     let password: String
@@ -101,9 +103,24 @@ struct User: Identifiable {
     let telegram: String?
     let email: String?
     let about: String?
+
+    /// Заголовок для UI: непустое `name`, иначе `userName`.
+    var displayName: String {
+        let trimmed = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? userName : trimmed
+    }
 }
 
 struct userDevelop {
-    static let user = User(id: UUID(uuidString: "4448457c-caaf-4d90-afbc-fa76982b7955")!, userName: "Name", position: position.designer, password: "Sequre-Password", tags: [.mobile, .ai, .analitic, .backend, .career, .fintech, .frontend, .startup], telegram: "telegram", email: "email", about: "Hello im dev person and im really cool, lets talk, sdjlkdsvlndsvlksdksdksdkse")
-    
+    static let user = User(
+        id: UUID(uuidString: "4448457c-caaf-4d90-afbc-fa76982b7955")!,
+        name: "Анна",
+        userName: "Name",
+        position: position.designer,
+        password: "Sequre-Password",
+        tags: [.mobile, .ai, .analitic, .backend, .career, .fintech, .frontend, .startup],
+        telegram: "telegram",
+        email: "email",
+        about: "Hello im dev person and im really cool, lets talk, sdjlkdsvlndsvlksdksdksdkse"
+    )
 }

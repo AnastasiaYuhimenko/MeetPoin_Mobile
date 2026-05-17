@@ -305,7 +305,7 @@ final class UserCellView: UIView {
         self.isSelf = isSelf
         self.connectionState = connectionState
 
-        nameLabel.text = user.userName
+        nameLabel.text = user.displayName
         positionLabel.text = user.position.rawValue
         tagsFlowView.configure(with: user.tags)
 

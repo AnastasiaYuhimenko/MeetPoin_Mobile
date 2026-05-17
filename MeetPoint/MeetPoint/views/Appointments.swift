@@ -611,7 +611,7 @@ private struct ParticipantRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(user.userName)
+                Text(user.displayName)
                     .font(.headline)
                     .foregroundStyle(Color.appPurple)
                     .lineLimit(2)

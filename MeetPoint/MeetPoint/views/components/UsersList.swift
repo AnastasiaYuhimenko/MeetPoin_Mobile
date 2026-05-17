@@ -21,7 +21,7 @@ struct UsersList: View {
                     HStack {
                         Image(systemName: "person.circle")
                             .font(.title)
-                        Text(user.userName)
+                        Text(user.displayName)
                             .lineLimit(2)
                             .truncationMode(.tail)
                     }
@@ -95,6 +95,7 @@ struct UserCellSheet: UIViewRepresentable {
 
     private var userCacheKey: String {
         var key = user.id?.uuidString ?? user.userName
+        key += "|" + user.displayName
         if let connectionState {
             switch connectionState {
             case .contacts:

@@ -8,6 +8,7 @@ import Combine
 
 @MainActor
 final class ProfileViewModel: ObservableObject {
+    @Published var profileName = ""
     @Published var userName = ""
     @Published var position: MeetPoint.position = .other
     @Published var selectedTags: Set<Tag> = []
@@ -25,7 +26,8 @@ final class ProfileViewModel: ObservableObject {
 
     var hasChanges: Bool {
         guard let saved = savedSnapshot else { return false }
-        return position != saved.position
+        return profileName != saved.profileName
+            || position != saved.position
             || selectedTags != saved.tags
             || email != saved.email
             || telegram != saved.telegram
@@ -37,6 +39,9 @@ final class ProfileViewModel: ObservableObject {
     }
 
     var validationMessage: String? {
+        if profileName.count > 100 {
+            return "Имя не длиннее 100 символов"
+        }
         if !email.isEmpty && !isEmailValid {
             return "Укажите email в формате name@mail.com"
         }
@@ -47,7 +52,7 @@ final class ProfileViewModel: ObservableObject {
     }
 
     private var isFormValid: Bool {
-        (email.isEmpty || isEmailValid) && (telegram.isEmpty || isTelegramValid)
+        profileName.count <= 100 && (email.isEmpty || isEmailValid) && (telegram.isEmpty || isTelegramValid)
     }
 
     private var isEmailValid: Bool {
@@ -100,6 +105,9 @@ final class ProfileViewModel: ObservableObject {
         defer { isSaving = false }
 
         let updateDto = UserUpdateDTO(
+            name: profileName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                ? nil
+                : profileName.trimmingCharacters(in: .whitespacesAndNewlines),
             position: position.rawValue,
             tags: tagsToSave,
             about: about.isEmpty ? nil : about,
@@ -116,6 +124,7 @@ final class ProfileViewModel: ObservableObject {
     }
 
     private func apply(_ profile: UserProfileDTO) {
+        profileName = profile.name ?? ""
         userName = profile.userName
         position = MeetPoint.position(rawValue: profile.position) ?? .other
         selectedTags = Set(profile.tags.compactMap { Tag(apiValue: $0) })
@@ -135,6 +144,7 @@ final class ProfileViewModel: ObservableObject {
     }
 
     private func applyProfileResponse(_ profile: UserResponseDTO) {
+        profileName = profile.name ?? ""
         userName = profile.userName
         position = MeetPoint.position(rawValue: profile.position) ?? .other
         selectedTags = Set(profile.tags.compactMap { Tag(apiValue: $0) })
@@ -151,6 +161,7 @@ final class ProfileViewModel: ObservableObject {
 
     private func storeSnapshot() {
         savedSnapshot = ProfileSnapshot(
+            profileName: profileName,
             position: position,
             tags: selectedTags,
             email: email,
@@ -230,6 +241,7 @@ final class ProfileViewModel: ObservableObject {
 }
 
 private struct ProfileSnapshot: Equatable {
+    let profileName: String
     let position: MeetPoint.position
     let tags: Set<Tag>
     let email: String

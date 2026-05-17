@@ -91,6 +91,7 @@ struct AppointmentDTO: Decodable {
 
 struct AppointmentParticipantDTO: Decodable {
     let id: UUID
+    let name: String?
     let userName: String
     let position: String
     let tags: [String]
@@ -116,6 +117,7 @@ struct IncomingConnectionDTO: Decodable {
 
 struct ContactDTO: Decodable {
     let id: UUID
+    let name: String?
     let userName: String
     let position: String
     let tags: [String]
@@ -130,6 +132,7 @@ struct ConnectionStatusDTO: Decodable {
 
 struct UserConnectionStatusDTO: Decodable {
     let userId: UUID
+    let name: String?
     let userName: String
     let status: String
     let requestId: UUID?
@@ -209,6 +212,7 @@ extension AppointmentParticipantDTO {
         let pos = MeetPoint.position(rawValue: self.position) ?? .other
         return User(
             id: id,
+            name: name,
             userName: userName,
             position: pos,
             password: "",
@@ -225,6 +229,7 @@ extension ContactDTO {
         let pos = MeetPoint.position(rawValue: self.position) ?? .other
         return User(
             id: id,
+            name: name,
             userName: userName,
             position: pos,
             password: "",

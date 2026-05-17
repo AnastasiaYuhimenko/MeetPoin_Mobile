@@ -61,6 +61,7 @@ class AuthViewModel: ObservableObject {
         errorMessage = nil
 
         let dto = UserCreateDTO(
+            name: user.name,
             userName: user.userName,
             position: user.position.rawValue,
             password: user.password,

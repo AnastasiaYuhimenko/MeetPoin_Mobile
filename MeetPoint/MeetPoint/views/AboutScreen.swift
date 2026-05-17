@@ -21,6 +21,7 @@ struct AboutScreen: View {
 
     @State private var positionValue: position = .other
     @State private var tags: Set<Tag> = []
+    @State private var profileName: String = ""
     @State private var userEmail: String = ""
     @State private var userTelegramm: String = ""
     @State private var aboutUser: String = ""
@@ -64,7 +65,12 @@ struct AboutScreen: View {
                     )
                     .transition(.asymmetric(insertion: slideInsertion, removal: slideRemoval))
                 case .contacts:
-                    AboutContacts(userEmail: $userEmail, userTelegramm: $userTelegramm, next: { advance(to: .work) })
+                    AboutContacts(
+                        profileName: $profileName,
+                        userEmail: $userEmail,
+                        userTelegramm: $userTelegramm,
+                        next: { advance(to: .work) }
+                    )
                         .transition(.asymmetric(insertion: slideInsertion, removal: slideRemoval))
                 case .work:
                     AboutWorkAndTags(positionValue: $positionValue, tags: $tags, next: { advance(to: .about) })
@@ -91,6 +97,9 @@ struct AboutScreen: View {
             await viewModel.register(
                 user: User(
                     id: nil,
+                    name: profileName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        ? nil
+                        : profileName.trimmingCharacters(in: .whitespacesAndNewlines),
                     userName: userName,
                     position: positionValue,
                     password: password,

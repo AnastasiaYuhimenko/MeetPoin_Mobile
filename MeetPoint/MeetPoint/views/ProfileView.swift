@@ -52,6 +52,7 @@ struct ProfileView: View {
     private var profileForm: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                displayNameSection
                 usernameSection
                 positionSection
                 tagsSection
@@ -74,6 +75,16 @@ struct ProfileView: View {
         }
         .refreshable {
             await refreshProfile()
+        }
+    }
+
+    private var displayNameSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionLabel("Имя", systemImage: "person.text.rectangle")
+            CustomTextField(text: $viewModel.profileName, placeholderText: "Как вас зовут")
+            Text("Показывается другим участникам; если пусто — виден только username")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 

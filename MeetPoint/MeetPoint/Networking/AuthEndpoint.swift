@@ -25,6 +25,7 @@ extension URLService {
 
 struct UserResponseDTO: Decodable {
     let id: String
+    let name: String?
     let userName: String
     let position: String
     let tags: [String]
@@ -44,6 +45,7 @@ struct UserEventDTO: Decodable {
 
 struct UserProfileDTO: Decodable {
     let id: String
+    let name: String?
     let userName: String
     let position: String
     let tags: [String]
@@ -55,6 +57,7 @@ struct UserProfileDTO: Decodable {
 }
 
 struct UserUpdateDTO: Encodable {
+    let name: String?
     let position: String
     let tags: [String]
     let about: String?
@@ -79,6 +82,7 @@ struct UsernameCheckResponseDTO: Decodable {
 // MARK: - Request DTOs
 
 struct UserCreateDTO: Encodable {
+    let name: String?
     let userName: String
     let position: String
     let password: String

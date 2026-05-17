@@ -110,7 +110,7 @@ private struct ContactRow: View {
                 .foregroundStyle(Color.appLightPurple)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(user.userName)
+                Text(user.displayName)
                     .font(.headline)
                     .foregroundStyle(Color.appPurple)
                 Text(user.position.rawValue)

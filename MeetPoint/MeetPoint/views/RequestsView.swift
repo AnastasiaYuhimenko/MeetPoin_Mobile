@@ -123,7 +123,7 @@ private struct RequestRow: View {
                         .foregroundStyle(Color.appLightPurple)
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(request.fromUser.userName)
+                        Text(request.fromUser.displayName)
                             .font(.headline)
                             .foregroundStyle(Color.appPurple)
                             .lineLimit(2)

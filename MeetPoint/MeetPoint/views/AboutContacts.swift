@@ -8,9 +8,12 @@
 import SwiftUI
 
 struct AboutContacts: View {
+    @Binding var profileName: String
     @Binding var userEmail: String
     @Binding var userTelegramm: String
     var next: () -> Void
+
+    private var isNameValid: Bool { profileName.count <= 100 }
 
     private var isEmailValid: Bool {
         let parts = userEmail.split(separator: "@")
@@ -22,7 +25,10 @@ struct AboutContacts: View {
     }
 
     private var canProceed: Bool {
-        (userEmail.isEmpty || isEmailValid) && (userTelegramm.isEmpty || isTelegramValid) && (!userEmail.isEmpty || !userTelegramm.isEmpty)
+        (userEmail.isEmpty || isEmailValid)
+            && (userTelegramm.isEmpty || isTelegramValid)
+            && (!userEmail.isEmpty || !userTelegramm.isEmpty)
+            && isNameValid
     }
 
     var body: some View {
@@ -47,7 +53,19 @@ struct AboutContacts: View {
                         .scaledToFit()
                         .frame(width: 300, height: 300)
                     VStack {
+                        CustomTextField(text: $profileName, placeholderText: "Как вас зовут (необязательно)")
+
+                        FlowLayout(spacing: 6) {
+                            ValidationHint(
+                                text: "Не больше 100 символов",
+                                isValid: isNameValid,
+                                isEmpty: profileName.isEmpty
+                            )
+                        }
+                        .padding(.top, 6)
+
                         CustomTextField(text: $userEmail, placeholderText: "Email")
+                            .padding(.top, 8)
 
                         FlowLayout(spacing: 6) {
                             ValidationHint(text: "Формат: name@mail.com", isValid: isEmailValid, isEmpty: userEmail.isEmpty)
