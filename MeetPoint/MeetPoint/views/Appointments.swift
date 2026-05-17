@@ -915,9 +915,7 @@ struct AppointmentDetailView: View {
                     )
             } else {
                 Button {
-                    if joinTags.isEmpty {
-                        joinTags = Set(displayedAppointment.tags)
-                    }
+                    joinTags = Set(displayedAppointment.tags)
                     showJoinTagsSheet = true
                 } label: {
                     Group {
@@ -948,9 +946,12 @@ struct AppointmentDetailView: View {
         let onConfirm: () -> Void
         let onCancel: () -> Void
 
-        private var customAvailableTags: [Tag] {
+        private var selectableTags: [Tag] {
             availableTags
-                .filter { !$0.isPredefined }
+                .reduce(into: [Tag]()) { result, tag in
+                    guard !result.contains(tag) else { return }
+                    result.append(tag)
+                }
                 .sorted { $0.rawValue.localizedCaseInsensitiveCompare($1.rawValue) == .orderedAscending }
         }
 
@@ -965,22 +966,16 @@ struct AppointmentDetailView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
 
-                    customTags(tags: $selectedTags)
+                    Text("Доступны только теги этого мероприятия.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
 
-                    if !customAvailableTags.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Теги мероприятия")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(Color.appPurple)
-
-                            FlowLayout(spacing: 8) {
-                                ForEach(customAvailableTags) { tag in
-                                    customTagButton(tag)
-                                }
-                            }
+                    FlowLayout(spacing: 8) {
+                        ForEach(selectableTags) { tag in
+                            customTagButton(tag)
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                     if selectedTags.isEmpty {
                         Text("Нужно выбрать хотя бы один тег")

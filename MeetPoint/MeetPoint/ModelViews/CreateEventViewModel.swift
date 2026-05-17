@@ -111,11 +111,12 @@ final class CreateEventViewModel: ObservableObject {
         let words = customTagInput
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .trimmingCharacters(in: CharacterSet(charactersIn: "#"))
-            .components(separatedBy: .whitespacesAndNewlines)
+            .lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
             .filter { !$0.isEmpty }
 
         guard !words.isEmpty else { return nil }
-        return Tag(apiValue: words.joined(separator: " "))
+        return Tag(apiValue: words.joined(separator: "-"))
     }
 
     private func friendlyMessage(for error: Error) -> String {
@@ -124,6 +125,7 @@ final class CreateEventViewModel: ObservableObject {
             case .badStatusCode(let code, let data):
                 let detail = parseServerDetail(from: data)
                 switch code {
+                case 400: return detail ?? "Проверьте теги: используйте короткие названия без спецсимволов"
                 case 401: return detail ?? "Войдите, чтобы создавать мероприятия"
                 case 422: return detail ?? "Проверьте введённые данные"
                 case 500: return "Внутренняя ошибка сервера (500)\(detail.map { ": \($0)" } ?? "")"
