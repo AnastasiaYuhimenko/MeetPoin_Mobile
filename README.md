@@ -10,7 +10,7 @@
 
 ## Стек
 
-- **iOS 26+**, Swift 5.10, SwiftUI + немного UIKit (карточка пользователя,
+- **iOS 26+**, Swift, SwiftUI + немного UIKit (карточка пользователя,
   QR-сканер на `AVCaptureSession`)
 - Архитектура **MVVM** 
 - Свой сетевой слой `URLService` поверх `URLSession` с retry и сохранением
@@ -19,6 +19,17 @@
   `meetpoint://event/<uuid>` и universal links `https://<host>/events/<uuid>`
 - Бэкенд: FastAPI на `http://111.88.144.41:8000`,
   веб-фронт: `http://111.88.144.41:3000` (сервер сейчас остановлен)
+
+## Некоторые экраны
+
+<img width="590" height="1280" alt="photo_2026-05-21_21-17-11" src="https://github.com/user-attachments/assets/23cf9540-fcb8-4773-9c5e-e3f0f3f760e5" />
+<img width="590" height="1280" alt="photo_2026-05-21_21-17-17" src="https://github.com/user-attachments/assets/c64d3b90-36fe-473f-9e8d-999f7c65b0c8" />
+<img width="590" height="1280" alt="photo_2026-05-21_21-17-21" src="https://github.com/user-attachments/assets/c454d8d2-4382-4c8a-956b-731274bfb49a" />
+<img width="590" height="1280" alt="photo_2026-05-21_21-17-21" src="https://github.com/user-attachments/assets/475cb877-7625-44a3-a3d7-78a1034299b2" />
+<img width="590" height="1280" alt="photo_2026-05-21_21-17-21" src="https://github.com/user-attachments/assets/fd4eacdf-f144-41f9-8851-fa78cbef734d" />
+<img width="590" height="1280" alt="photo_2026-05-21_21-17-24" src="https://github.com/user-attachments/assets/c5eb7098-e2cf-4dd4-8fa9-e1ab424e5bdf" />
+<img width="590" height="1280" alt="photo_2026-05-21_21-17-26" src="https://github.com/user-attachments/assets/d8a6f03e-7b42-4926-937d-67af31995d8e" />
+
 
 ## Структура проекта
 
