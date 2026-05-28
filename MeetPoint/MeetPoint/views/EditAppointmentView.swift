@@ -138,7 +138,7 @@ struct EditAppointmentView: View {
 
     private var saveButton: some View {
         Button {
-            QoSRunner.fireAndForgetUserInitiated {
+            Task {
                 if let updated = await viewModel.save() {
                     onUpdated(updated)
                     dismiss()

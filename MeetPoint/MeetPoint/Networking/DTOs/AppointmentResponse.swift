@@ -1,5 +1,5 @@
 //
-//  AppointmentRequest.swift
+//  AppointmentResponse.swift
 //  MeetPoint
 //
 //  Created by Anastasia Yukhimenko on 28.05.2026.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AppointmentDTO: Decodable {
+struct AppointmentDTO: Decodable, Sendable {
     let id: UUID
     let title: String
     let date: Date
@@ -16,7 +16,7 @@ struct AppointmentDTO: Decodable {
     let participantsCount: Int
 }
 
-struct AppointmentParticipantDTO: Decodable {
+struct AppointmentParticipantDTO: Decodable, Sendable {
     let id: UUID
     let name: String?
     let userName: String
@@ -24,25 +24,25 @@ struct AppointmentParticipantDTO: Decodable {
     let tags: [String]
 }
 
-struct AppointmentRoleDTO: Decodable {
+struct AppointmentRoleDTO: Decodable, Sendable {
     let isAdmin: Bool
 }
 
-struct AppointmentStatsDTO: Decodable {
+struct AppointmentStatsDTO: Decodable, Sendable {
     let registeredCount: Int
     let requestsSent: Int
     let requestsAccepted: Int
     let acquaintancesMade: Int
 }
 
-struct IncomingConnectionDTO: Decodable {
+struct IncomingConnectionDTO: Decodable, Sendable {
     let id: UUID
     let fromUser: AppointmentParticipantDTO
     let appointmentId: UUID
     let createdAt: Date
 }
 
-struct ContactDTO: Decodable {
+struct ContactDTO: Decodable, Sendable {
     let id: UUID
     let name: String?
     let userName: String
@@ -52,12 +52,12 @@ struct ContactDTO: Decodable {
     let email: String?
 }
 
-struct ConnectionStatusDTO: Decodable {
+struct ConnectionStatusDTO: Decodable, Sendable{
     let id: UUID
     let status: String
 }
 
-struct UserConnectionStatusDTO: Decodable {
+struct UserConnectionStatusDTO: Decodable, Sendable {
     let userId: UUID
     let name: String?
     let userName: String
@@ -66,7 +66,7 @@ struct UserConnectionStatusDTO: Decodable {
     let appointmentId: UUID?
 }
 
-struct EventResponseDTO: Decodable {
+struct EventResponseDTO: Decodable, Sendable {
     let id: UUID
     let name: String
     let date: Date
@@ -83,5 +83,72 @@ struct EventResponseDTO: Decodable {
         case tags
         case qrUrl = "qr_url"
         case adminToken = "admin_token"
+    }
+}
+
+
+
+// MARK: - DTO → Domain mapping
+
+extension AppointmentDTO {
+    func toAppointment(
+        isParticipating: Bool = false,
+        isAdmin: Bool = false
+    ) -> Appointment {
+        Appointment(
+            id: id,
+            title: title,
+            date: date,
+            description: description,
+            tags: tags.compactMap { Tag(apiValue: $0) },
+            participantsCount: participantsCount,
+            isParticipating: isParticipating,
+            isAdmin: isAdmin
+        )
+    }
+}
+
+extension AppointmentParticipantDTO {
+    func toUser() -> User {
+        let pos = MeetPoint.position(rawValue: self.position) ?? .other
+        return User(
+            id: id,
+            name: name,
+            userName: userName,
+            position: pos,
+            password: "",
+            tags: tags.compactMap { Tag(apiValue: $0) },
+            telegram: nil,
+            email: nil,
+            about: nil
+        )
+    }
+}
+
+extension ContactDTO {
+    func toUser() -> User {
+        let pos = MeetPoint.position(rawValue: self.position) ?? .other
+        return User(
+            id: id,
+            name: name,
+            userName: userName,
+            position: pos,
+            password: "",
+            tags: tags.compactMap { Tag(apiValue: $0) },
+            telegram: telegram,
+            email: email,
+            about: nil
+        )
+    }
+}
+
+extension AppointmentStatsDTO {
+    func toStats() -> AppointmentStats {
+        AppointmentStats(
+            registeredCount: registeredCount,
+            requestsSent: requestsSent,
+            requestsAccepted: requestsAccepted,
+            acquaintancesMade: acquaintancesMade
+        )
     }
 }

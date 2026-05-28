@@ -4,8 +4,8 @@
 //
 
 import Foundation
-
-/// Понятные сообщения пользователю на русском, без показа HTTP-кодов.
+import Networking
+/// тексты ошибок для показа пользователю
 enum UserFacingNetworkMessage {
 
     enum Context: Sendable {

@@ -48,7 +48,7 @@ struct FlowLayout: Layout {
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let resolvedProposal = proposal.replacingUnspecifiedDimensions(
-            by: CGSize(width: UIScreen.main.bounds.width, height: 0)
+            by: CGSize(width: 390, height: 0) // обычно родитель передает ширину, так что 390 - просто fallback
         )
         let maxWidth = resolvedProposal.width
         var height: CGFloat = 0

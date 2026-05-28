@@ -7,6 +7,7 @@
 
 import SwiftUI
 import UIKit
+import Networking
 
 struct EventQRView: View {
 
@@ -17,7 +18,7 @@ struct EventQRView: View {
     @State private var showShareSheet = false
 
     private var shareLink: String {
-        URLService.eventShareLink(for: event.id)
+        AppNetworking.eventShareLink(for: event.id)
     }
 
     private var formattedDate: String {
@@ -176,13 +177,13 @@ struct EventQRView: View {
                 )
         )
     }
-
+    
     private var actionsCard: some View {
         HStack(spacing: 12) {
             Button {
                 UIPasteboard.general.string = shareLink
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { copied = true }
-                QoSRunner.fireAndForgetUserInitiated {
+                Task {
                     try? await Task.sleep(nanoseconds: 1_500_000_000)
                     withAnimation { copied = false }
                 }
@@ -197,7 +198,7 @@ struct EventQRView: View {
                             .stroke(Color.appPurple, lineWidth: 1)
                     )
             }
-
+            
             Button {
                 showShareSheet = true
             } label: {

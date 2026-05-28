@@ -18,7 +18,9 @@ struct RegistrationView: View {
 
     private var isUsernameEmpty: Bool { userName.trimmingCharacters(in: .whitespaces).isEmpty }
     private var isUsernameTaken: Bool { viewModel.isUsernameAvailable == false }
-    private var isUsernameChecking: Bool { !isUsernameEmpty && userName.count >= 3 && viewModel.isUsernameAvailable == nil }
+    private var isUsernameChecking: Bool {
+        !isUsernameEmpty && userName.count >= 3 && viewModel.isUsernameAvailable == nil && !viewModel.usernameCheckFailed
+    }
 
     private var isPasswordLongEnough: Bool { password.count >= 8 }
     private var isPasswordHasLetter: Bool { password.contains(where: { $0.isLetter }) }
@@ -42,6 +44,12 @@ struct RegistrationView: View {
     }
 
     private var latinUsernameHintNeutral: Bool { isUsernameEmpty && !usernameHadRejectedChars }
+
+    private var usernameHintText: String {
+        if isUsernameChecking { return "Проверяем..." }
+        if viewModel.usernameCheckFailed { return "Не удалось проверить. Проверьте сеть." }
+        return "Username свободен"
+    }
 
     var body: some View {
         GeometryReader { geo in
@@ -69,9 +77,9 @@ struct RegistrationView: View {
                                     .scaleEffect(0.7)
                             }
                             ValidationHint(
-                                text: isUsernameChecking ? "Проверяем..." : "Username свободен",
+                                text: usernameHintText,
                                 isValid: viewModel.isUsernameAvailable == true,
-                                isEmpty: isUsernameEmpty
+                                isEmpty: isUsernameEmpty && !viewModel.usernameCheckFailed
                             )
                         }
                         .padding(.horizontal)

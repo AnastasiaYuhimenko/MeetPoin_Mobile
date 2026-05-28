@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 import SwiftUI
+import Networking
 
 struct AppointmentStats {
     let registeredCount: Int
@@ -72,8 +73,8 @@ final class AppointmentDetailViewModel: ObservableObject {
     @Published var isRegistered = false
     @Published var isRegistering = false
 
-    private let service = URLService.api
-    private let authService = URLService.auth
+    private let service = AppNetworking.shared
+    private let authService = AppNetworking.auth
     private var participantFilterTask: Task<Void, Never>?
     private var loadingStatuses: Set<UUID> = []
 
@@ -183,7 +184,6 @@ final class AppointmentDetailViewModel: ObservableObject {
                 userId: userId,
                 username: nil
             ),
-            decoder: .api
         )
         do {
             let dto = try await NetworkTask.fetch(service, resource: resource)
@@ -243,7 +243,6 @@ final class AppointmentDetailViewModel: ObservableObject {
     private func performRegistration(appointmentId: UUID) async throws {
         let resource = Resource<UserResponseDTO, RegisterForAppointmentRequest>(
             request: RegisterForAppointmentRequest(appointmentId: appointmentId),
-            decoder: .api
         )
         _ = try await NetworkTask.fetch(service, resource: resource)
     }
@@ -262,7 +261,6 @@ final class AppointmentDetailViewModel: ObservableObject {
     private func fetchCurrentUserProfile(appointmentId: UUID) async -> (userId: UUID?, isRegistered: Bool)? {
         let resource = Resource<UserResponseDTO, GetMyProfileRequest>(
             request: GetMyProfileRequest(),
-            decoder: .api
         )
         guard let profile = try? await NetworkTask.fetch(authService, resource: resource) else {
             return nil

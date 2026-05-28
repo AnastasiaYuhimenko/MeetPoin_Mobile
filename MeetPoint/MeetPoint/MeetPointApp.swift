@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Networking
 
 @main
 struct MeetPointApp: App {
@@ -13,6 +14,9 @@ struct MeetPointApp: App {
     @StateObject private var authViewModel = AuthViewModel()
     @StateObject private var deepLinkRouter = DeepLinkRouter()
 
+    init() {
+        NetworkLogging.subsystem = Bundle.main.bundleIdentifier ?? "MeetPoint"
+    }
     var body: some Scene {
         WindowGroup {
             ZStack {

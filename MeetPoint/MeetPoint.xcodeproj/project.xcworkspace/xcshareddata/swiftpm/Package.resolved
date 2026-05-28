@@ -1,0 +1,15 @@
+{
+  "originHash" : "6f8306b11c0cf5d21b86a7bec1c42d15007d911646e6dd1648aaaa38a38a5dd1",
+  "pins" : [
+    {
+      "identity" : "networking",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/AnastasiaYuhimenko/Networking",
+      "state" : {
+        "branch" : "main",
+        "revision" : "a638bdd04fa288d7959898021b3955f6f1de5047"
+      }
+    }
+  ],
+  "version" : 3
+}

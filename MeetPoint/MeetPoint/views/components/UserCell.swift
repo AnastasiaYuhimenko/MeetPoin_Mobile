@@ -576,7 +576,7 @@ final class UserCellView: UIView {
 
     @objc private func didTapDecline() {
         hasOffer = false
-        connectionState = .none
+        connectionState = ConnectionStatusState.none
         refresh()
     }
 }

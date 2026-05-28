@@ -1,12 +1,13 @@
 //
-//  UserResponseDTO.swift
+//  AuthResponse.swift
 //  MeetPoint
 //
 //  Created by Anastasia Yukhimenko on 28.05.2026.
 //
 
+import Foundation
 
-struct UserResponseDTO: Decodable {
+struct UserResponseDTO: Decodable, Sendable {
     let id: String
     let name: String?
     let userName: String
@@ -18,7 +19,7 @@ struct UserResponseDTO: Decodable {
     let about: String?
 }
 
-struct UserEventDTO: Decodable {
+struct UserEventDTO: Decodable, Sendable {
     let id: UUID
     let name: String
     let date: Date
@@ -26,7 +27,7 @@ struct UserEventDTO: Decodable {
     let tags: [String]
 }
 
-struct UserProfileDTO: Decodable {
+struct UserProfileDTO: Decodable, Sendable {
     let id: String
     let name: String?
     let userName: String
@@ -39,7 +40,7 @@ struct UserProfileDTO: Decodable {
     let event: UserEventDTO?
 }
 
-struct UserUpdateDTO: Encodable {
+struct UserUpdateDTO: Encodable, Sendable {
     let name: String?
     let position: String
     let tags: [String]
@@ -48,7 +49,7 @@ struct UserUpdateDTO: Encodable {
     let email: String?
 }
 
-struct LoginResponseDTO: Decodable {
+struct LoginResponseDTO: Decodable, Sendable {
     let accessToken: String
     let tokenType: String
 
@@ -58,6 +59,6 @@ struct LoginResponseDTO: Decodable {
     }
 }
 
-struct UsernameCheckResponseDTO: Decodable {
+struct UsernameCheckResponseDTO: Decodable, Sendable {
     let isAvailable: Bool
 }

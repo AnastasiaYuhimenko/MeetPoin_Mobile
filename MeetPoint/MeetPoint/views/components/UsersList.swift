@@ -79,7 +79,7 @@ struct UserCellSheet: UIViewRepresentable {
             return cached
         }
 
-        let width = proposal.width ?? UIScreen.main.bounds.width
+        let width = proposal.width ?? uiView.window?.windowScene?.screen.bounds.width ?? 390
         uiView.frame = CGRect(x: 0, y: 0, width: width, height: UIView.layoutFittingExpandedSize.height)
         uiView.setNeedsLayout()
         uiView.layoutIfNeeded()

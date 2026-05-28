@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 import SwiftUI
+import Networking
 
 struct IncomingRequest: Identifiable {
     let id: UUID
@@ -21,7 +22,7 @@ final class RequestsViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var error: String?
 
-    private let service = URLService.api
+    private let service = AppNetworking.shared
     private var hasLoaded = false
 
     func loadRequests(force: Bool = false) async {
@@ -34,7 +35,6 @@ final class RequestsViewModel: ObservableObject {
 
         let resource = Resource<[IncomingConnectionDTO], GetIncomingRequestsEndpoint>(
             request: GetIncomingRequestsEndpoint(),
-            decoder: .api
         )
         do {
             let dtos = try await NetworkTask.fetch(service, resource: resource)

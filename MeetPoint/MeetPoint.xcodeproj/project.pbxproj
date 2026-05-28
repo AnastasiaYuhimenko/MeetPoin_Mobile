@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		4D3A93E72FC87B6000EFE546 /* Networking in Frameworks */ = {isa = PBXBuildFile; productRef = 4D3A93E62FC87B6000EFE546 /* Networking */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		4DB54BF32FB7414200F82022 /* MeetPoint.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MeetPoint.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D3A93E72FC87B6000EFE546 /* Networking in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +83,7 @@
 			);
 			name = MeetPoint;
 			packageProductDependencies = (
+				4D3A93E62FC87B6000EFE546 /* Networking */,
 			);
 			productName = MeetPoint;
 			productReference = 4DB54BF32FB7414200F82022 /* MeetPoint.app */;
@@ -107,6 +113,9 @@
 			);
 			mainGroup = 4DB54BEA2FB7414200F82022;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4D3A93E52FC87B6000EFE546 /* XCRemoteSwiftPackageReference "Networking" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4DB54BF42FB7414200F82022 /* Products */;
 			projectDirPath = "";
@@ -285,7 +294,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -319,7 +328,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -349,6 +358,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4D3A93E52FC87B6000EFE546 /* XCRemoteSwiftPackageReference "Networking" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AnastasiaYuhimenko/Networking";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4D3A93E62FC87B6000EFE546 /* Networking */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4D3A93E52FC87B6000EFE546 /* XCRemoteSwiftPackageReference "Networking" */;
+			productName = Networking;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 4DB54BEB2FB7414200F82022 /* Project object */;
 }

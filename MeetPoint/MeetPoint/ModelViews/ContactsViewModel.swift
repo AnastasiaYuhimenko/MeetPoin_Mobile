@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import Networking
 
 @MainActor
 final class ContactsViewModel: ObservableObject {
@@ -14,7 +15,7 @@ final class ContactsViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var error: String?
 
-    private let service = URLService.api
+    private let service = AppNetworking.shared
     private var hasLoaded = false
 
     func loadContacts(force: Bool = false) async {

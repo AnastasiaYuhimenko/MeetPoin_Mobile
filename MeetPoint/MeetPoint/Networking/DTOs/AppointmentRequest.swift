@@ -1,18 +1,18 @@
 //
-//  ConnectionRequestCreateDTO.swift
+//  AppointmentRequest.swift
 //  MeetPoint
 //
 //  Created by Anastasia Yukhimenko on 28.05.2026.
 //
 
+import Foundation
 
-
-struct ConnectionRequestCreateDTO: Encodable {
+struct ConnectionRequestCreateDTO: Encodable, Sendable {
     let toUserId: UUID
     let appointmentId: UUID
 }
 
-struct EventCreateDTO: Encodable {
+struct EventCreateDTO: Encodable, Sendable {
     let name: String
     let date: Date
     let description: String
@@ -26,7 +26,7 @@ struct EventCreateDTO: Encodable {
     }
 }
 
-struct AppointmentUpdateDTO: Encodable {
+struct AppointmentUpdateDTO: Encodable, Sendable {
     let title: String
     let date: Date
     let description: String

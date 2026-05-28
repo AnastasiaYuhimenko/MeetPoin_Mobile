@@ -5,6 +5,7 @@
 
 import Foundation
 import Combine
+import Networking
 
 @MainActor
 final class ProfileViewModel: ObservableObject {
@@ -22,7 +23,7 @@ final class ProfileViewModel: ObservableObject {
 
     private var savedSnapshot: ProfileSnapshot?
 
-    private let authService = URLService.auth
+    private let authService = AppNetworking.auth
 
     var hasChanges: Bool {
         guard let saved = savedSnapshot else { return false }
@@ -84,7 +85,6 @@ final class ProfileViewModel: ObservableObject {
 
         let resource = Resource<UserProfileDTO, GetMyProfileRequest>(
             request: GetMyProfileRequest(),
-            decoder: .api
         )
 
         do {
@@ -137,7 +137,6 @@ final class ProfileViewModel: ObservableObject {
     private func updateProfile(_ dto: UserUpdateDTO) async throws {
         let resource = Resource<UserResponseDTO, UpdateMyProfileRequest>(
             request: UpdateMyProfileRequest(dto: dto),
-            decoder: .api
         )
         let updated = try await NetworkTask.fetch(authService, resource: resource)
         applyProfileResponse(updated)

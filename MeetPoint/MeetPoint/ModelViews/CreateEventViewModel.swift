@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import Networking
 
 struct CreatedEvent: Identifiable, Hashable {
     let id: UUID
@@ -30,7 +31,7 @@ final class CreateEventViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var createdEvent: CreatedEvent?
 
-    private let service = URLService.api
+    private let service = AppNetworking.shared
 
     var isFormValid: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -66,7 +67,6 @@ final class CreateEventViewModel: ObservableObject {
 
         let resource = Resource<EventResponseDTO, CreateEventRequest>(
             request: CreateEventRequest(dto: dto),
-            decoder: .api
         )
 
         do {

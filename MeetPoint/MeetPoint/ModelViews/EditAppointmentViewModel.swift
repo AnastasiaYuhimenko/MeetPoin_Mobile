@@ -5,6 +5,7 @@
 
 import Foundation
 import Combine
+import Networking
 
 @MainActor
 final class EditAppointmentViewModel: ObservableObject {
@@ -19,7 +20,7 @@ final class EditAppointmentViewModel: ObservableObject {
     private let appointmentId: UUID
     private var savedSnapshot: EditSnapshot?
 
-    private let service = URLService.api
+    private let service = AppNetworking.shared
 
     init(appointment: Appointment) {
         appointmentId = appointment.id
@@ -60,8 +61,7 @@ final class EditAppointmentViewModel: ObservableObject {
         )
 
         let resource = Resource<AppointmentDTO, UpdateAppointmentRequest>(
-            request: UpdateAppointmentRequest(appointmentId: appointmentId, dto: dto),
-            decoder: .api
+            request: UpdateAppointmentRequest(appointmentId: appointmentId, dto: dto)
         )
 
         do {

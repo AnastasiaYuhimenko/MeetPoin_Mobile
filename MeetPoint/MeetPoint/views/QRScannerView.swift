@@ -282,7 +282,7 @@ final class QRScannerViewController: UIViewController {
 
     private func updateOrientation() {
         guard let connection = previewLayer?.connection else { return }
-        let interfaceOrientation = view.window?.windowScene?.interfaceOrientation ?? .portrait
+        let interfaceOrientation = view.window?.windowScene?.effectiveGeometry.interfaceOrientation ?? .portrait
         let angle: CGFloat
         switch interfaceOrientation {
         case .portrait: angle = 90

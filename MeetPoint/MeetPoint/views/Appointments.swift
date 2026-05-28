@@ -119,7 +119,8 @@ private struct AppointmentCard: View {
                     .lineLimit(2)
                     .truncationMode(.tail)
                     .layoutPriority(1)
-                    .frame(maxWidth: UIScreen.main.bounds.width / 2 - 20, alignment: .leading)
+                    .containerRelativeFrame(.horizontal, count: 2, span: 1, spacing: 20, alignment: .leading)
+
 
                 Spacer(minLength: 8)
 
@@ -743,7 +744,7 @@ struct AppointmentDetailView: View {
     }
 
     private var eventShareLink: String {
-        URLService.eventShareLink(for: displayedAppointment.id)
+        AppNetworking.eventShareLink(for: displayedAppointment.id)
     }
 
     var body: some View {
@@ -813,18 +814,17 @@ struct AppointmentDetailView: View {
                 availableTags: displayedAppointment.tags,
                 isSaving: viewModel.isRegistering,
                 onConfirm: {
-                    QoSRunner.fireAndForgetUserInitiated {
+                    Task {
                         await viewModel.registerForAppointment(
                             appointmentId: displayedAppointment.id,
                             tags: joinTags
                         )
+                        
                         if viewModel.error == nil {
-                            await MainActor.run {
-                                showJoinTagsSheet = false
-                            }
+                            showJoinTagsSheet = false
                         }
                     }
-                },
+        },
                 onCancel: { showJoinTagsSheet = false }
             )
         }

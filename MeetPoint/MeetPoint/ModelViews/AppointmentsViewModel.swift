@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import Networking
 
 enum AppointmentOwnershipFilter: CaseIterable, Hashable {
     case all
@@ -34,8 +35,8 @@ final class AppointmentsViewModel: ObservableObject {
     @Published var selectedTags: Set<Tag> = []
     @Published private(set) var totalAppointmentsCount = 0
 
-    private let service = URLService.api
-    private let authService = URLService.auth
+    private let service = AppNetworking.shared
+    private let authService = AppNetworking.auth
     private var hasLoaded = false
     private var allAppointments: [Appointment] = []
     private var myCreatedAppointments: [Appointment] = []
@@ -75,8 +76,7 @@ final class AppointmentsViewModel: ObservableObject {
         }
 
         let resource = Resource<AppointmentDTO, GetAppointmentRequest>(
-            request: GetAppointmentRequest(appointmentId: id),
-            decoder: .api
+            request: GetAppointmentRequest(appointmentId: id)
         )
         do {
             let dto = try await NetworkTask.fetch(service, resource: resource)
@@ -140,8 +140,7 @@ final class AppointmentsViewModel: ObservableObject {
 
     private func fetchAllAppointments() async throws -> [Appointment] {
         let resource = Resource<[AppointmentDTO], ListAppointmentsRequest>(
-            request: ListAppointmentsRequest(),
-            decoder: .api
+            request: ListAppointmentsRequest()
         )
         let dtos = try await NetworkTask.fetch(service, resource: resource)
         return dtos.map { $0.toAppointment() }
@@ -149,8 +148,7 @@ final class AppointmentsViewModel: ObservableObject {
 
     private func fetchMyCreatedAppointments() async throws -> [Appointment] {
         let resource = Resource<[AppointmentDTO], ListMyCreatedAppointmentsRequest>(
-            request: ListMyCreatedAppointmentsRequest(),
-            decoder: .api
+            request: ListMyCreatedAppointmentsRequest()
         )
         let dtos = try await NetworkTask.fetch(service, resource: resource)
         return dtos.map { $0.toAppointment() }
@@ -216,9 +214,8 @@ final class AppointmentsViewModel: ObservableObject {
     }
 
     private nonisolated static func fetchCurrentUserId(using authService: URLService) async -> UUID? {
-        let resource = await Resource<UserResponseDTO, GetMyProfileRequest>(
-            request: GetMyProfileRequest(),
-            decoder: .api
+        let resource = Resource<UserResponseDTO, GetMyProfileRequest>(
+            request: GetMyProfileRequest()
         )
         guard let profile = try? await NetworkTask.fetch(
             authService,
