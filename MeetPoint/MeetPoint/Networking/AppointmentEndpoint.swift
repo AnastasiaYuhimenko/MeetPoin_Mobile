@@ -27,8 +27,7 @@ struct ListMyCreatedAppointmentsRequest: Requestable {
     let page: Int
     var path: String { "/appointments/my-created" }
     var parameters: [URLQueryItem] {
-        var q = [URLQueryItem(name: "page", value: String(page))]
-        return q
+        [URLQueryItem(name: "page", value: String(page))]
     }
     var headers: [HTTPHeaderKey: String] { AppNetworking.bearerHeaders }
 }
