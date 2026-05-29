@@ -10,12 +10,26 @@ import Networking
 // MARK: - Requestable stucts
 
 struct ListAppointmentsRequest: Requestable {
+    let page: Int
+    let myRole: AppointmentOwnershipFilter?
     var path: String { "/appointments" }
+    var parameters: [URLQueryItem] {
+        var q = [URLQueryItem(name: "page", value: String(page))]
+        if let myRole {
+            q.append(URLQueryItem(name: "role", value: myRole.param))
+        }
+        return q
+    }
     var headers: [HTTPHeaderKey: String] { AppNetworking.bearerHeaders }
 }
 
 struct ListMyCreatedAppointmentsRequest: Requestable {
+    let page: Int
     var path: String { "/appointments/my-created" }
+    var parameters: [URLQueryItem] {
+        var q = [URLQueryItem(name: "page", value: String(page))]
+        return q
+    }
     var headers: [HTTPHeaderKey: String] { AppNetworking.bearerHeaders }
 }
 
@@ -45,10 +59,13 @@ struct GetAppointmentParticipantsRequest: Requestable {
     let appointmentId: UUID
     /// пустой массив — без фильтра, все участники.
     let filterTags: [String]
+    let page: Int
 
     var path: String { "/appointments/\(appointmentId)/participants" }
     var parameters: [URLQueryItem] {
-        filterTags.map { URLQueryItem(name: "tags", value: $0) }
+        var lst = filterTags.map { URLQueryItem(name: "tags", value: $0) }
+        lst.append(URLQueryItem(name: "page", value: String(page)))
+        return lst
     }
     var headers: [HTTPHeaderKey: String] { AppNetworking.bearerHeaders }
 }

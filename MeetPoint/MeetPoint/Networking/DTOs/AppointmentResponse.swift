@@ -16,12 +16,22 @@ struct AppointmentDTO: Decodable, Sendable {
     let participantsCount: Int
 }
 
+struct PagginatedAnswerAppointmentsDTO: Decodable, Sendable {
+    let items: [AppointmentDTO]
+    let totalPages: Int
+}
+
 struct AppointmentParticipantDTO: Decodable, Sendable {
     let id: UUID
     let name: String?
     let userName: String
     let position: String
     let tags: [String]
+}
+
+struct AppointmentsParcipiantsPagginatetDTO: Decodable, Sendable {
+    let totalPages: Int
+    let items: [AppointmentParticipantDTO]
 }
 
 struct AppointmentRoleDTO: Decodable, Sendable {

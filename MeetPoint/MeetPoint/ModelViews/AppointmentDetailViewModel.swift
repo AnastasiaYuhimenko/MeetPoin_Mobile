@@ -72,13 +72,13 @@ final class AppointmentDetailViewModel: ObservableObject {
     @Published var isAdmin = false
     @Published var isRegistered = false
     @Published var isRegistering = false
-
+    @Published var totalPages: Int = 0
     private let service = AppNetworking.shared
     private let authService = AppNetworking.auth
     private var participantFilterTask: Task<Void, Never>?
     private var loadingStatuses: Set<UUID> = []
 
-    func loadData(appointmentId: UUID) async {
+    func loadData(appointmentId: UUID, page: Int) async {
         isLoading = true
         error = nil
         defer { isLoading = false }
@@ -88,7 +88,8 @@ final class AppointmentDetailViewModel: ObservableObject {
         let participantsTask = Task(priority: .userInitiated) {
             try await fetchParticipants(
                 appointmentId: appointmentId,
-                filterTags: filterTags
+                filterTags: filterTags,
+                page: page
             )
         }
         async let admin = fetchAdminRole(appointmentId: appointmentId)
@@ -97,7 +98,7 @@ final class AppointmentDetailViewModel: ObservableObject {
 
         let loadedParticipants: [User]
         do {
-            loadedParticipants = try await participantsTask.value
+            (loadedParticipants, totalPages) = try await participantsTask.value
         } catch {
             loadedParticipants = []
             self.error = UserFacingNetworkMessage.message(for: error, context: .apiAction)
@@ -117,13 +118,13 @@ final class AppointmentDetailViewModel: ObservableObject {
         }
     }
 
-    func scheduleParticipantFilter(_ tags: Set<Tag>, appointmentId: UUID) {
+    func scheduleParticipantFilter(_ tags: Set<Tag>, appointmentId: UUID, page: Int) {
         participantFilterTags = tags
         participantFilterTask?.cancel()
         participantFilterTask = Task(priority: .userInitiated) {
             try? await Task.sleep(nanoseconds: 250_000_000)
             guard !Task.isCancelled else { return }
-            await reloadParticipants(appointmentId: appointmentId, filterTags: tags)
+            await reloadParticipants(appointmentId: appointmentId, filterTags: tags, page: page)
         }
     }
 
@@ -150,7 +151,8 @@ final class AppointmentDetailViewModel: ObservableObject {
             isRegistered = true
             await reloadParticipants(
                 appointmentId: appointmentId,
-                filterTags: participantFilterTags
+                filterTags: participantFilterTags,
+                page: 0
             )
         }
     }
@@ -219,14 +221,15 @@ final class AppointmentDetailViewModel: ObservableObject {
         }
     }
 
-    private func reloadParticipants(appointmentId: UUID, filterTags: Set<Tag>) async {
+    private func reloadParticipants(appointmentId: UUID, filterTags: Set<Tag>, page: Int) async {
         isLoadingParticipants = true
         defer { isLoadingParticipants = false }
 
         do {
-            participants = try await fetchParticipants(
+            (participants, totalPages) = try await fetchParticipants(
                 appointmentId: appointmentId,
-                filterTags: filterTags
+                filterTags: filterTags,
+                page: page
             )
         } catch {
             self.error = UserFacingNetworkMessage.message(for: error, context: .apiAction)
@@ -283,27 +286,30 @@ final class AppointmentDetailViewModel: ObservableObject {
 
     private func fetchParticipants(
         appointmentId: UUID,
-        filterTags: Set<Tag>
-    ) async throws -> [User] {
+        filterTags: Set<Tag>,
+        page: Int
+    ) async throws -> ([User], Int) {
         let tagValues = filterTags.map(\.apiValue).sorted()
-        let resource = Resource<[AppointmentParticipantDTO], GetAppointmentParticipantsRequest>(
+        let resource = Resource<AppointmentsParcipiantsPagginatetDTO, GetAppointmentParticipantsRequest>(
             request: GetAppointmentParticipantsRequest(
                 appointmentId: appointmentId,
-                filterTags: tagValues
+                filterTags: tagValues,
+                page: page
             )
         )
         let dtos = try await NetworkTask.fetch(service, resource: resource)
+        
         guard !filterTags.isEmpty else {
-            return dtos.map { $0.toUser() }
+            return (dtos.items.map { $0.toUser() }, dtos.totalPages)
         }
 
         // Backend can occasionally ignore tag filtering; keep client behavior stable.
         let normalizedSelectedTags = Set(filterTags.map { $0.apiValue.lowercased() })
-        let filteredDTOs = dtos.filter { participant in
+        let filteredDTOs = dtos.items.filter { participant in
             let participantTags = Set(participant.tags.map { $0.lowercased() })
             return !participantTags.isDisjoint(with: normalizedSelectedTags)
         }
-        return filteredDTOs.map { $0.toUser() }
+        return (filteredDTOs.map { $0.toUser() }, dtos.totalPages)
     }
 
     private func fetchStatistics(appointmentId: UUID) async -> AppointmentStats? {

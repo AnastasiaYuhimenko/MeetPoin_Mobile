@@ -208,6 +208,7 @@ struct Appointments: View {
     @State private var showCreateEvent = false
     @State private var showScanner = false
     @State private var isResolvingDeepLink = false
+    @State var page: Int = 0
 
     var body: some View {
         NavigationStack {
@@ -275,7 +276,7 @@ struct Appointments: View {
             }
             .sheet(isPresented: $showCreateEvent, onDismiss: {
                 QoSRunner.fireAndForgetUserInitiated {
-                    await viewModel.loadAppointments(force: true)
+                    await viewModel.loadAppointments(force: true, page: viewModel.page)
                 }
             }) {
                 CreateEventView()
@@ -301,8 +302,9 @@ struct Appointments: View {
                 }
             }
             .task {
+                viewModel.page = page
                 try? await QoSRunner.userInitiated {
-                    await viewModel.loadAppointments()
+                    await viewModel.loadAppointments(page: page)
                 }
             }
             .onChange(of: deepLinkRouter.pendingAppointmentId) { _, newValue in
@@ -473,7 +475,7 @@ struct Appointments: View {
                     .multilineTextAlignment(.center)
                 customButton(text: "Повторить") {
                     QoSRunner.fireAndForgetUserInitiated {
-                        await viewModel.loadAppointments(force: true)
+                        await viewModel.loadAppointments(force: true, page: viewModel.page)
                     }
                 }
             }
@@ -487,7 +489,7 @@ struct Appointments: View {
 
     private func refreshAppointments() async {
         try? await QoSRunner.userInitiated {
-            await viewModel.loadAppointments(force: true)
+            await viewModel.loadAppointments(force: true, page: viewModel.page)
         }
     }
 }
@@ -730,7 +732,7 @@ struct AppointmentDetailView: View {
     @State private var showEditAppointment = false
     @State private var showJoinTagsSheet = false
     @State private var joinTags: Set<Tag> = []
-
+    @State private var usPage: Int = 0
     init(appointment: Appointment, onAppointmentUpdated: ((Appointment) -> Void)? = nil) {
         _displayedAppointment = State(initialValue: appointment)
         self.onAppointmentUpdated = onAppointmentUpdated
@@ -828,7 +830,7 @@ struct AppointmentDetailView: View {
                 onCancel: { showJoinTagsSheet = false }
             )
         }
-        .task { await viewModel.loadData(appointmentId: displayedAppointment.id) }
+        .task { await viewModel.loadData(appointmentId: displayedAppointment.id, page: usPage) }
         .errorToast($viewModel.error)
         .sheet(item: $selectedUser) { user in
             let fallbackStatus: ConnectionStatusState? = {
@@ -863,7 +865,7 @@ struct AppointmentDetailView: View {
 
     private func refreshAppointmentDetail() async {
         try? await QoSRunner.userInitiated {
-            await viewModel.loadData(appointmentId: displayedAppointment.id)
+            await viewModel.loadData(appointmentId: displayedAppointment.id, page: usPage)
         }
     }
 
@@ -1115,10 +1117,10 @@ struct AppointmentDetailView: View {
                     } else {
                         next.insert(tag)
                     }
-                    viewModel.scheduleParticipantFilter(next, appointmentId: displayedAppointment.id)
+                    viewModel.scheduleParticipantFilter(next, appointmentId: displayedAppointment.id, page: usPage)
                 },
                 onClear: {
-                    viewModel.scheduleParticipantFilter([], appointmentId: displayedAppointment.id)
+                    viewModel.scheduleParticipantFilter([], appointmentId: displayedAppointment.id, page: usPage)
                 }
             )
 

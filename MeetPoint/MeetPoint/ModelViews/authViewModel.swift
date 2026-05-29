@@ -10,7 +10,7 @@ import Combine
 import Networking
 
 @MainActor
-class AuthViewModel: ObservableObject {
+final class AuthViewModel: ObservableObject {
     
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -36,9 +36,6 @@ class AuthViewModel: ObservableObject {
         }
     }
     
-    
-    // MARK: - Username availability
-    
     func checkUsername(_ username: String) async {
         isUsernameAvailable = nil
         usernameCheckFailed = false
@@ -56,8 +53,6 @@ class AuthViewModel: ObservableObject {
             usernameCheckFailed = true
         }
     }
-    
-    // MARK: - Registration
     
     func register(user: User) async {
         isLoading = true
@@ -88,8 +83,6 @@ class AuthViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Login
-    
     func auth(userName: String, password: String) async {
         isLoading = true
         errorMessage = nil
@@ -109,8 +102,6 @@ class AuthViewModel: ObservableObject {
         
         isLoading = false
     }
-    
-    // MARK: - Logout
     
     func logout() {
         accessToken = nil
