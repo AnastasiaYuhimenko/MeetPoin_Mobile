@@ -11,12 +11,16 @@ import Networking
 
 struct ListAppointmentsRequest: Requestable {
     let page: Int
+    let filtrTags: [String]
     let myRole: AppointmentOwnershipFilter?
     var path: String { "/appointments" }
     var parameters: [URLQueryItem] {
         var q = [URLQueryItem(name: "page", value: String(page))]
         if let myRole {
             q.append(URLQueryItem(name: "role", value: myRole.param))
+        }
+        if !filtrTags.isEmpty {
+            q.append(makeURLQweryTags(tags: filtrTags))
         }
         return q
     }
@@ -62,8 +66,11 @@ struct GetAppointmentParticipantsRequest: Requestable {
 
     var path: String { "/appointments/\(appointmentId)/participants" }
     var parameters: [URLQueryItem] {
-        var lst = filterTags.map { URLQueryItem(name: "tags", value: $0) }
+        var lst: [URLQueryItem] = []
         lst.append(URLQueryItem(name: "page", value: String(page)))
+        if !filterTags.isEmpty {
+            lst.append(makeURLQweryTags(tags: filterTags))
+        }
         return lst
     }
     var headers: [HTTPHeaderKey: String] { AppNetworking.bearerHeaders }
@@ -157,4 +164,10 @@ struct CreateEventRequest: Requestable {
     var path: String { "/appointments" }
     var headers: [HTTPHeaderKey: String] { AppNetworking.bearerHeaders }
     var body: EventCreateDTO? { dto }
+}
+
+// сделает из списка тегов query параметр
+private func makeURLQweryTags(tags: [String]) -> URLQueryItem {
+    let s = tags.joined(separator: ",")
+    return URLQueryItem(name: "tags", value: s)
 }

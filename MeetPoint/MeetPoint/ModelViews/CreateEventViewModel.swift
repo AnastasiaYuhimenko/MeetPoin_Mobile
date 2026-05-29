@@ -36,8 +36,12 @@ final class CreateEventViewModel: ObservableObject {
     var isFormValid: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !eventDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !selectedTags.isEmpty
+            && (TagSelectionLimits.minimum...TagSelectionLimits.maximum).contains(selectedTags.count)
             && date > Date()
+    }
+
+    var isAtTagMaximum: Bool {
+        selectedTags.count >= TagSelectionLimits.maximum
     }
 
     var customSelectedTags: [Tag] {
@@ -47,6 +51,7 @@ final class CreateEventViewModel: ObservableObject {
     }
 
     var canAddCustomTag: Bool {
+        guard !isAtTagMaximum else { return false }
         guard let tag = normalizedCustomTag else { return false }
         return !selectedTags.contains(tag)
     }
@@ -96,7 +101,7 @@ final class CreateEventViewModel: ObservableObject {
     }
 
     func addCustomTag() {
-        guard let tag = normalizedCustomTag else { return }
+        guard !isAtTagMaximum, let tag = normalizedCustomTag else { return }
         selectedTags.insert(tag)
         customTagInput = ""
     }

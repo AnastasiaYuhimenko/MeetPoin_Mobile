@@ -124,15 +124,24 @@ struct EditAppointmentView: View {
         }
     }
 
+    private var editTagSelectionHint: String {
+        let count = viewModel.selectedTags.count
+        if count == 0 {
+            return "Выберите от \(TagSelectionLimits.minimum) до \(TagSelectionLimits.maximum) тегов"
+        }
+        if viewModel.isAtTagMaximum {
+            return "Выбрано максимум \(TagSelectionLimits.maximum) тегов"
+        }
+        return "Выбрано \(count) из \(TagSelectionLimits.maximum)"
+    }
+
     private var tagsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionLabel("Теги", systemImage: "tag")
             customTags(tags: $viewModel.selectedTags)
-            if viewModel.selectedTags.isEmpty {
-                Text("Выберите хотя бы один тег")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Text(editTagSelectionHint)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 

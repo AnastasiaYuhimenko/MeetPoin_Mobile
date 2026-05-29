@@ -9,20 +9,27 @@ import SwiftUI
 
 struct customTags: View {
     @Binding var tags: Set<Tag>
+    var maxSelection: Int = TagSelectionLimits.maximum
+
+    private var isAtMaximum: Bool {
+        tags.count >= maxSelection
+    }
+
     let columns = [
         GridItem(.adaptive(minimum: 100))
     ]
-    
+
     var body: some View {
         LazyVGrid(columns: columns, spacing: 12) {
             ForEach(Tag.allCases) { tag in
 
                 let isSelected = tags.contains(tag)
+                let canSelect = isSelected || !isAtMaximum
 
                 Button {
                     if isSelected {
                         tags.remove(tag)
-                    } else {
+                    } else if canSelect {
                         tags.insert(tag)
                     }
                 } label: {
@@ -45,6 +52,8 @@ struct customTags: View {
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
+                .disabled(!canSelect)
+                .opacity(canSelect ? 1 : 0.45)
             }
         }
     }

@@ -298,18 +298,8 @@ final class AppointmentDetailViewModel: ObservableObject {
             )
         )
         let dtos = try await NetworkTask.fetch(service, resource: resource)
-        
-        guard !filterTags.isEmpty else {
-            return (dtos.items.map { $0.toUser() }, dtos.totalPages)
-        }
 
-        // Backend can occasionally ignore tag filtering; keep client behavior stable.
-        let normalizedSelectedTags = Set(filterTags.map { $0.apiValue.lowercased() })
-        let filteredDTOs = dtos.items.filter { participant in
-            let participantTags = Set(participant.tags.map { $0.lowercased() })
-            return !participantTags.isDisjoint(with: normalizedSelectedTags)
-        }
-        return (filteredDTOs.map { $0.toUser() }, dtos.totalPages)
+        return (dtos.items.map { $0.toUser() }, dtos.totalPages)
     }
 
     private func fetchStatistics(appointmentId: UUID) async -> AppointmentStats? {

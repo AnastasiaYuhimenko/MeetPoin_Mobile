@@ -140,17 +140,27 @@ struct CreateEventView: View {
             customTags(tags: $viewModel.selectedTags)
             customTagInput
             customSelectedTags
-            if viewModel.selectedTags.isEmpty {
-                Text("Выберите хотя бы один тег")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Text(tagSelectionHint)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
+    }
+
+    private var tagSelectionHint: String {
+        let count = viewModel.selectedTags.count
+        if count == 0 {
+            return "Выберите от \(TagSelectionLimits.minimum) до \(TagSelectionLimits.maximum) тегов"
+        }
+        if viewModel.isAtTagMaximum {
+            return "Выбрано максимум \(TagSelectionLimits.maximum) тегов"
+        }
+        return "Выбрано \(count) из \(TagSelectionLimits.maximum)"
     }
 
     private var customTagInput: some View {
         HStack(spacing: 10) {
             TextField("Добавить свой тег", text: $viewModel.customTagInput)
+                .disabled(viewModel.isAtTagMaximum)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .submitLabel(.done)

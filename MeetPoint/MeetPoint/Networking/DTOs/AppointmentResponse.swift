@@ -14,6 +14,8 @@ struct AppointmentDTO: Decodable, Sendable {
     let description: String
     let tags: [String]
     let participantsCount: Int
+    let isParticipant: Bool
+    let isAdmin: Bool
 }
 
 struct PagginatedAnswerAppointmentsDTO: Decodable, Sendable {
@@ -102,8 +104,6 @@ struct EventResponseDTO: Decodable, Sendable {
 
 extension AppointmentDTO {
     func toAppointment(
-        isParticipating: Bool = false,
-        isAdmin: Bool = false
     ) -> Appointment {
         Appointment(
             id: id,
@@ -112,7 +112,7 @@ extension AppointmentDTO {
             description: description,
             tags: tags.compactMap { Tag(apiValue: $0) },
             participantsCount: participantsCount,
-            isParticipating: isParticipating,
+            isParticipating: isParticipant,
             isAdmin: isAdmin
         )
     }

@@ -424,7 +424,7 @@ struct Appointments: View {
                 ForEach(Tag.allCases) { tag in
                     AppointmentsFilterChip(
                         title: tag.rawValue,
-                        isSelected: viewModel.selectedTags.contains(tag)
+                        isSelected: viewModel.selectedTags.contains(tag.apiValue)
                     ) {
                         viewModel.toggleTag(tag)
                     }
@@ -1117,9 +1117,11 @@ struct AppointmentDetailView: View {
                     } else {
                         next.insert(tag)
                     }
+                    usPage = 0
                     viewModel.scheduleParticipantFilter(next, appointmentId: displayedAppointment.id, page: usPage)
                 },
                 onClear: {
+                    usPage = 0
                     viewModel.scheduleParticipantFilter([], appointmentId: displayedAppointment.id, page: usPage)
                 }
             )

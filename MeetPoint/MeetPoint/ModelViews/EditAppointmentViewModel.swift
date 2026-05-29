@@ -39,7 +39,11 @@ final class EditAppointmentViewModel: ObservableObject {
     var isFormValid: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !eventDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !selectedTags.isEmpty
+            && (TagSelectionLimits.minimum...TagSelectionLimits.maximum).contains(selectedTags.count)
+    }
+
+    var isAtTagMaximum: Bool {
+        selectedTags.count >= TagSelectionLimits.maximum
     }
 
     var canSave: Bool {

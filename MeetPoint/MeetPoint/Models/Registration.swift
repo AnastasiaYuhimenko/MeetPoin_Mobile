@@ -21,6 +21,11 @@ enum position: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+enum TagSelectionLimits {
+    static let minimum = 1
+    static let maximum = 9
+}
+
 struct Tag: RawRepresentable, CaseIterable, Identifiable, Hashable {
     let rawValue: String
 

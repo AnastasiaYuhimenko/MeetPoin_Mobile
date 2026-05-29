@@ -43,7 +43,14 @@ final class AppointmentsViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var error: String?
     @Published var selectedOwnershipFilter: AppointmentOwnershipFilter = .all
-    @Published var selectedTags: Set<Tag> = []
+    @Published var selectedTags: [String] = [] {
+        didSet {
+            self.page = 0
+            Task {
+                await reloadList(page: 0)
+            }
+        }
+    }
     @Published private(set) var totalAppointmentsCount = 0
     @Published var totalPages: Int = 0
     @Published var page = 0
@@ -51,13 +58,6 @@ final class AppointmentsViewModel: ObservableObject {
     private let service = AppNetworking.shared
     private var hasLoaded = false
     private var allAppointments: [Appointment] = []
-    private var myCreatedAppointments: [Appointment] = []
-    private var participatingAppointmentIDs: Set<UUID> = []
-    private var currentPageAppointments: [Appointment] = []
-
-    private var adminAppointmentIDs: Set<UUID> {
-        Set(myCreatedAppointments.map(\.id))
-    }
 
     func loadAppointments(force: Bool = false, page: Int) async {
         if hasLoaded && !force { return }
@@ -66,40 +66,44 @@ final class AppointmentsViewModel: ObservableObject {
         isLoading = true
         error = nil
         defer { isLoading = false }
-
-        do {
-            try await refreshBadgeMetadata(page: page)
-            try await reloadList(page: page, managesLoading: false)
-            hasLoaded = true
-        } catch {
-            self.error = UserFacingNetworkMessage.message(for: error, context: .appointmentsList)
-        }
+        await reloadList(page: page, managesLoading: false)
     }
 
     func reloadList(page: Int, managesLoading: Bool = true) async {
+        if managesLoading, isLoading { return }
+
         if managesLoading {
-            guard !isLoading else { return }
             isLoading = true
             error = nil
-            defer { isLoading = false }
+        }
+
+        defer {
+            if managesLoading {
+                isLoading = false
+            }
         }
 
         self.page = page
 
         do {
-            let (fetched, pages) = try await fetchAppointments(page: page, filter: selectedOwnershipFilter)
-            totalPages = pages
-            cacheAppointments(fetched, for: selectedOwnershipFilter)
-            currentPageAppointments = fetched
-            appointments = applyTagFilter(to: fetched)
+            var pages = 0
+            (self.appointments, pages) = try await fetchAppointments(
+                page: page,
+                filter: selectedOwnershipFilter,
+                filterTags: selectedTags
+            )
+            self.totalPages = pages
+            cacheAppointments(appointments, for: selectedOwnershipFilter)
             if selectedOwnershipFilter == .all {
                 totalAppointmentsCount = allAppointments.count
             }
+            hasLoaded = true
         } catch {
+            hasLoaded = false
             self.error = UserFacingNetworkMessage.message(for: error, context: .appointmentsList)
-            currentPageAppointments = []
-            appointments = []
+            self.appointments = []
         }
+        
     }
 
     func fetchAppointment(id: UUID) async -> Appointment? {
@@ -112,10 +116,7 @@ final class AppointmentsViewModel: ObservableObject {
         )
         do {
             let dto = try await NetworkTask.fetch(service, resource: resource)
-            let appointment = dto.toAppointment(
-                isParticipating: participatingAppointmentIDs.contains(dto.id),
-                isAdmin: adminAppointmentIDs.contains(dto.id)
-            )
+            let appointment = dto.toAppointment()
             if !appointments.contains(where: { $0.id == appointment.id }) {
                 appointments.append(appointment)
             }
@@ -128,36 +129,36 @@ final class AppointmentsViewModel: ObservableObject {
 
     func replaceAppointment(_ appointment: Appointment) {
         updateCachedAppointment(appointment)
-        if let index = currentPageAppointments.firstIndex(where: { $0.id == appointment.id }) {
-            currentPageAppointments[index] = appointment
+        if let index = appointments.firstIndex(where: { $0.id == appointment.id }) {
+            appointments[index] = appointment
         }
-        appointments = applyTagFilter(to: currentPageAppointments)
     }
 
     func selectOwnershipFilter(_ filter: AppointmentOwnershipFilter) {
         guard selectedOwnershipFilter != filter else { return }
         selectedOwnershipFilter = filter
+        self.page = 0
         Task { await reloadList(page: page) }
     }
 
     func toggleTag(_ tag: Tag) {
-        if selectedTags.contains(tag) {
-            selectedTags.remove(tag)
+        if selectedTags.contains(tag.apiValue) {
+            let idx = selectedTags.firstIndex(of: tag.apiValue)
+            if let idx {
+                selectedTags.remove(at: idx)
+            }
         } else {
-            selectedTags.insert(tag)
+            selectedTags.append(tag.apiValue)
         }
-        appointments = applyTagFilter(to: currentPageAppointments)
     }
 
     func clearTagFilter() {
         selectedTags = []
-        appointments = applyTagFilter(to: currentPageAppointments)
     }
 
     func resetAllFilters() {
         selectedOwnershipFilter = .all
         selectedTags = []
-        Task { await reloadList(page: page) }
     }
 
     var hasActiveFilters: Bool {
@@ -166,64 +167,32 @@ final class AppointmentsViewModel: ObservableObject {
 
     // MARK: - Private
 
-    private func refreshBadgeMetadata(page: Int) async {
-        async let participatingIDsTask = fetchParticipatingAppointmentIDs(page: 0)
-        async let createdTask = fetchAppointments(page: page, filter: .createdByMe)
-
-        participatingAppointmentIDs = await participatingIDsTask
-        myCreatedAppointments = (try? await createdTask)?.0 ?? []
-    }
-
     private func fetchAppointments(
         page: Int,
-        filter: AppointmentOwnershipFilter
+        filter: AppointmentOwnershipFilter,
+        filterTags: [String]
     ) async throws -> ([Appointment], Int) {
         let myRole: AppointmentOwnershipFilter? = filter == .all ? nil : filter
         let resource = Resource<PagginatedAnswerAppointmentsDTO, ListAppointmentsRequest>(
-            request: ListAppointmentsRequest(page: page, myRole: myRole)
+            request: ListAppointmentsRequest(page: page, filtrTags: filterTags, myRole: myRole)
         )
         let dtos = try await NetworkTask.fetch(service, resource: resource)
         let appointments = dtos.items.map { dto in
-            dto.toAppointment(
-                isParticipating: filter == .participating || participatingAppointmentIDs.contains(dto.id),
-                isAdmin: filter == .createdByMe || adminAppointmentIDs.contains(dto.id)
-            )
+            dto.toAppointment()
         }
         return (appointments, dtos.totalPages)
     }
 
-    private func fetchParticipatingAppointmentIDs(page: Int) async -> Set<UUID> {
-        let apiService = service
-        return await Task.detached(priority: .utility) {
-            await Self.fetchParticipatingAppointmentIDs(service: apiService, page: page)
-        }.value
-    }
 
-    private nonisolated static func fetchParticipatingAppointmentIDs(
-        service: URLService,
-        page: Int
-    ) async -> Set<UUID> {
-        let resource = Resource<PagginatedAnswerAppointmentsDTO, ListAppointmentsRequest>(
-            request: ListAppointmentsRequest(page: page, myRole: .participating)
-        )
-        guard let dtos = try? await NetworkTask.fetch(
-            service,
-            resource: resource,
-            priority: .utility
-        ) else {
-            return []
-        }
-        return Set(dtos.items.map(\.id))
-    }
 
     private func cacheAppointments(_ fetched: [Appointment], for filter: AppointmentOwnershipFilter) {
         switch filter {
         case .all:
             allAppointments = fetched
         case .participating:
-            participatingAppointmentIDs = Set(fetched.map(\.id))
+            break
         case .createdByMe:
-            myCreatedAppointments = fetched
+            break
         }
     }
 
@@ -233,19 +202,6 @@ final class AppointmentsViewModel: ObservableObject {
         }
         if let index = allAppointments.firstIndex(where: { $0.id == appointment.id }) {
             allAppointments[index] = appointment
-        }
-        if let index = myCreatedAppointments.firstIndex(where: { $0.id == appointment.id }) {
-            myCreatedAppointments[index] = appointment
-        }
-        if appointment.isParticipating {
-            participatingAppointmentIDs.insert(appointment.id)
-        }
-    }
-
-    private func applyTagFilter(to source: [Appointment]) -> [Appointment] {
-        guard !selectedTags.isEmpty else { return source }
-        return source.filter { appointment in
-            !appointment.tags.filter { selectedTags.contains($0) }.isEmpty
         }
     }
 }
