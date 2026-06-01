@@ -38,6 +38,11 @@ final class CreateEventViewModel: ObservableObject {
             && !eventDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && (TagSelectionLimits.minimum...TagSelectionLimits.maximum).contains(selectedTags.count)
             && date > Date()
+            && date < Calendar.current.date(
+                byAdding: .year,
+                value: 10,
+                to: Date()
+            )!
     }
 
     var isAtTagMaximum: Bool {

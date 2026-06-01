@@ -14,11 +14,9 @@ import Combine
 ///   https://<host>/appointments/<uuid>
 @MainActor
 final class DeepLinkRouter: ObservableObject {
-
     /// id мероприятия, на которое нужно открыть детальный экран
     @Published var pendingAppointmentId: UUID?
 
-    /// Текст ошибки, если ссылку не удалось разобрать
     @Published var error: String?
 
     func handle(url: URL) {

@@ -16,7 +16,7 @@ struct EventQRView: View {
 
     @State private var copied = false
     @State private var showShareSheet = false
-
+    let selectedTags: [String]
     private var shareLink: String {
         AppNetworking.eventShareLink(for: event.id)
     }
@@ -95,7 +95,7 @@ struct EventQRView: View {
             if !event.tags.isEmpty {
                 FlowLayout(spacing: 6) {
                     ForEach(event.tags) { tag in
-                        TagPill(tag: tag)
+                        TagPill(tag: tag.rawValue, userTags: selectedTags)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -274,7 +274,7 @@ struct ShareSheet: UIViewControllerRepresentable {
                 qrUrl: "meetpoint://event/12345",
                 adminToken: "6ac01db991d2424eac77aa79b92874ca"
             ),
-            onDone: {}
+            onDone: {}, selectedTags: ["aaaa"]
         )
     }
 }

@@ -4,15 +4,22 @@
 //
 
 import SwiftUI
+import Networking
 
 struct EditAppointmentView: View {
     let onUpdated: (Appointment) -> Void
+    let onDeleted: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: EditAppointmentViewModel
-
-    init(appointment: Appointment, onUpdated: @escaping (Appointment) -> Void) {
+    
+    init(
+        appointment: Appointment,
+        onUpdated: @escaping (Appointment) -> Void,
+        onDeleted: @escaping () -> Void = {}
+    ) {
         self.onUpdated = onUpdated
+        self.onDeleted = onDeleted
         _viewModel = StateObject(wrappedValue: EditAppointmentViewModel(appointment: appointment))
     }
 
@@ -38,6 +45,8 @@ struct EditAppointmentView: View {
 
                         saveButton
                             .padding(.top, 8)
+                        deleteButton
+                            
                     }
                     .padding(20)
                 }
@@ -66,7 +75,31 @@ struct EditAppointmentView: View {
                 .foregroundStyle(.secondary)
         }
     }
-
+    
+    private var deleteButton: some View {
+        Button {
+            Task {
+                if await viewModel.deleteAppointment() {
+                    dismiss()
+                    onDeleted()
+                }
+            }
+        } label: {
+            ZStack {
+                HStack {
+                    Text("Удалить мероприятие")
+                }
+                .fontWeight(.semibold)
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(lineWidth: 1)
+                    .fill(Color.red)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 45)
+            }
+        }
+        .glassEffect(.regular.tint(Color.red.opacity(0.1)), in: RoundedRectangle(cornerRadius: 12))
+    }
+    
     private var nameField: some View {
         VStack(alignment: .leading, spacing: 8) {
             sectionLabel("Название", systemImage: "textformat")
@@ -185,4 +218,8 @@ struct EditAppointmentView: View {
                 .foregroundStyle(Color.appPurple)
         }
     }
+    
+    
+    
+   
 }

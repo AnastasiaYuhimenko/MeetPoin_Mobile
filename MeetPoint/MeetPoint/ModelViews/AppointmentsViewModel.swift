@@ -134,6 +134,14 @@ final class AppointmentsViewModel: ObservableObject {
         }
     }
 
+    func removeAppointment(id: UUID) {
+        appointments.removeAll { $0.id == id }
+        allAppointments.removeAll { $0.id == id }
+        if selectedOwnershipFilter == .all {
+            totalAppointmentsCount = allAppointments.count
+        }
+    }
+
     func selectOwnershipFilter(_ filter: AppointmentOwnershipFilter) {
         guard selectedOwnershipFilter != filter else { return }
         selectedOwnershipFilter = filter

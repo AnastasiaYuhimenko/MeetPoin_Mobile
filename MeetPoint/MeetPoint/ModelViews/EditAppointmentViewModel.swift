@@ -96,6 +96,18 @@ final class EditAppointmentViewModel: ObservableObject {
         )
     }
 
+    func  deleteAppointment() async -> Bool {
+        let res = Resource<Void, DeleteAppointment> (
+            request: DeleteAppointment(AppointmentID: appointmentId)
+        )
+            do {
+                try await NetworkTask.fetch(AppNetworking.shared, resource: res)
+                return true
+            } catch {
+                errorMessage = UserFacingNetworkMessage.message(for: error, context: .editAppointment)
+                return false
+            }
+    }
 }
 
 private struct EditSnapshot: Equatable {

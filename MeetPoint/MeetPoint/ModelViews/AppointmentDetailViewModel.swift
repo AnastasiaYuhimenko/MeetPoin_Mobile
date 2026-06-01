@@ -60,7 +60,7 @@ enum ConnectionStatusState: Equatable {
 @MainActor
 final class AppointmentDetailViewModel: ObservableObject {
     @Published var participants: [User] = []
-    @Published var participantFilterTags: Set<Tag> = []
+    @Published var participantFilterTags: [String] = []
     @Published var stats: AppointmentStats?
     @Published var isLoading = false
     @Published var isLoadingParticipants = false
@@ -83,12 +83,10 @@ final class AppointmentDetailViewModel: ObservableObject {
         error = nil
         defer { isLoading = false }
 
-        let filterTags = participantFilterTags
-
         let participantsTask = Task(priority: .userInitiated) {
             try await fetchParticipants(
                 appointmentId: appointmentId,
-                filterTags: filterTags,
+                filterTags: participantFilterTags,
                 page: page
             )
         }
@@ -118,7 +116,7 @@ final class AppointmentDetailViewModel: ObservableObject {
         }
     }
 
-    func scheduleParticipantFilter(_ tags: Set<Tag>, appointmentId: UUID, page: Int) {
+    func scheduleParticipantFilter(_ tags: [String], appointmentId: UUID, page: Int) {
         participantFilterTags = tags
         participantFilterTask?.cancel()
         participantFilterTask = Task(priority: .userInitiated) {
@@ -221,7 +219,7 @@ final class AppointmentDetailViewModel: ObservableObject {
         }
     }
 
-    private func reloadParticipants(appointmentId: UUID, filterTags: Set<Tag>, page: Int) async {
+    private func reloadParticipants(appointmentId: UUID, filterTags: [String], page: Int) async {
         isLoadingParticipants = true
         defer { isLoadingParticipants = false }
 
@@ -286,10 +284,10 @@ final class AppointmentDetailViewModel: ObservableObject {
 
     private func fetchParticipants(
         appointmentId: UUID,
-        filterTags: Set<Tag>,
+        filterTags: [String],
         page: Int
     ) async throws -> ([User], Int) {
-        let tagValues = filterTags.map(\.apiValue).sorted()
+        let tagValues = filterTags.sorted()
         let resource = Resource<AppointmentsParcipiantsPagginatetDTO, GetAppointmentParticipantsRequest>(
             request: GetAppointmentParticipantsRequest(
                 appointmentId: appointmentId,

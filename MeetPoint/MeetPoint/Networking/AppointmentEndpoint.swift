@@ -103,6 +103,11 @@ struct UpdateMyAppointmentTagsRequest: Requestable {
     var body: AppointmentTagsUpdateDTO? { dto }
 }
 
+struct TagsRequest: Requestable {
+    let appointment_id: UUID
+    var path: String {"/tags/\(appointment_id)"}
+}
+
 // MARK: - Requestable stucts, Connections
 
 struct SendConnectionRequestEndpoint: Requestable {
@@ -155,6 +160,13 @@ struct GetUserConnectionStatusRequest: Requestable {
     var headers: [HTTPHeaderKey: String] { AppNetworking.bearerHeaders }
 }
 
+struct DeleteAppointment: Requestable {
+    let AppointmentID: UUID
+    var path: String { "/appointments/\(AppointmentID)" }
+    var method: HTTPMethod {.DELETE}
+    var headers: [HTTPHeaderKey: String] { AppNetworking.bearerHeaders }
+}
+
 // MARK: - Requestable stucts, Events
 
 struct CreateEventRequest: Requestable {
@@ -171,3 +183,4 @@ private func makeURLQweryTags(tags: [String]) -> URLQueryItem {
     let s = tags.joined(separator: ",")
     return URLQueryItem(name: "tags", value: s)
 }
+

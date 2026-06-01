@@ -11,7 +11,7 @@ struct RequestsView: View {
     @StateObject private var viewModel = RequestsViewModel()
     @State private var selectedUser: User?
     @State private var didRequestLoad = false
-
+    let profileVIewModel = ProfileViewModel()
     var body: some View {
         NavigationStack {
             Group {
@@ -64,7 +64,7 @@ struct RequestsView: View {
                             QoSRunner.fireAndForgetUserInitiated {
                                 await viewModel.declineRequest(request.id)
                             }
-                        }
+                        }, curUserTags: profileVIewModel.selectedTags.map { $0.rawValue }
                     )
                 }
             }
@@ -113,7 +113,7 @@ private struct RequestRow: View {
     let onTap: () -> Void
     let onAccept: () -> Void
     let onDecline: () -> Void
-
+    let curUserTags: [String]
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -147,7 +147,7 @@ private struct RequestRow: View {
 
             FlowLayout(spacing: 6) {
                 ForEach(request.fromUser.tags) { tag in
-                    TagPill(tag: tag)
+                    TagPill(tag: tag.rawValue, userTags: curUserTags)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

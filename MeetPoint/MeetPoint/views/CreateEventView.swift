@@ -13,6 +13,7 @@ struct CreateEventView: View {
     @StateObject private var viewModel = CreateEventViewModel()
 
     @State private var navigateToQR = false
+    let selectedTags: [String]
 
     var body: some View {
         NavigationStack {
@@ -48,9 +49,9 @@ struct CreateEventView: View {
             .errorToast($viewModel.errorMessage)
             .navigationDestination(isPresented: $navigateToQR) {
                 if let event = viewModel.createdEvent {
-                    EventQRView(event: event) {
+                    EventQRView(event: event, onDone: {
                         dismiss()
-                    }
+                    }, selectedTags: selectedTags)
                 }
             }
             .onChange(of: viewModel.createdEvent) { _, newValue in
@@ -269,5 +270,5 @@ struct CreateEventView: View {
 }
 
 #Preview {
-    CreateEventView()
+    CreateEventView(selectedTags: ["a"])
 }

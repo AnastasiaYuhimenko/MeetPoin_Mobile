@@ -25,6 +25,7 @@ final class ProfileViewModel: ObservableObject {
 
     private let authService = AppNetworking.auth
 
+    
     var hasChanges: Bool {
         guard let saved = savedSnapshot else { return false }
         return profileName != saved.profileName
@@ -75,6 +76,12 @@ final class ProfileViewModel: ObservableObject {
 
     private var hasLoaded = false
 
+    init() {
+        Task {
+           await self.loadProfile()
+        }
+    }
+    
     func loadProfile(force: Bool = false) async {
         if hasLoaded && !force { return }
         if isLoading { return }

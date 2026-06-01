@@ -30,9 +30,9 @@ struct MainScreen: View {
                     Label("Профиль", systemImage: "person.crop.circle")
                 }
         }
-        .tint(.appYellow)
+        .tint(.appPurple)
         .toolbarBackground(Color.appBackground, for: .tabBar)
-        .toolbarBackground(.visible, for: .tabBar)
+        .toolbarBackground(.appYellow, for: .tabBar)
     }
 }
 

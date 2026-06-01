@@ -98,14 +98,14 @@ struct EventResponseDTO: Decodable, Sendable {
     }
 }
 
-
-
-// MARK: - DTO → Domain mapping
+struct TagsRespounseDTO: Decodable, Sendable {
+    let tags: [String]
+}
 
 extension AppointmentDTO {
     func toAppointment(
     ) -> Appointment {
-        Appointment(
+        return Appointment(
             id: id,
             title: title,
             date: date,
@@ -113,7 +113,8 @@ extension AppointmentDTO {
             tags: tags.compactMap { Tag(apiValue: $0) },
             participantsCount: participantsCount,
             isParticipating: isParticipant,
-            isAdmin: isAdmin
+            isAdmin: isAdmin,
+            allTags: tags
         )
     }
 }
