@@ -545,7 +545,7 @@ final class UserCellView: UIView {
             addFriendButton.backgroundColor = UIColor(named: "appLightPurple")
                 ?? UIColor(named: "appPurple")
                 ?? .appMutedSurface
-        case .none:
+        case .none, .declined:
             offerButtonsStack.isHidden = true
             addFriendStack.isHidden = false
             addFriendButton.setTitle("Добавить в друзья", for: .normal)

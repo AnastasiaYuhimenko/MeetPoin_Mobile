@@ -446,28 +446,22 @@ struct AppointmentDetailView: View {
         )
     }
 
+    @State private var isFiltersShowing = false
+    @StateObject private var requestsViewModel = RequestsViewModel()
+
     private var participantsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Участники")
-                .fontWeight(.medium)
-            ParticipantTagFilter(
-                selectedTags: viewModel.participantFilterTags,
-                onToggle: { tag in
-                    var next = viewModel.participantFilterTags
-                    if let index = next.firstIndex(of: tag) {
-                        next.remove(at: index)
-                    } else {
-                        next.append(tag)
-                    }
-                    usPage = 0
-                    viewModel.scheduleParticipantFilter(next, appointmentId: displayedAppointment.id, page: usPage)
-                },
-                onClear: {
-                    usPage = 0
-                    viewModel.scheduleParticipantFilter([], appointmentId: displayedAppointment.id, page: usPage)
-                },
-                allTags: displayedAppointment.allTags
-            )
+            HStack {
+                Text("Участники")
+                    .fontWeight(.medium)
+                Spacer()
+                Button {
+                    isFiltersShowing.toggle()
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .foregroundStyle(viewModel.participantFilterTags.isEmpty ? Color.appPurple : Color.appLightPurple)
+                }
+            }
 
             if viewModel.isLoadingParticipants {
                 ProgressView()
@@ -495,20 +489,31 @@ struct AppointmentDetailView: View {
                             return nil
                         }()
                         let connectionStatus = cachedStatus ?? fallbackStatus
+                        let isOrganizer = user.isEventOrganizer
+                            || (isCurrentUser && viewModel.isAdmin)
                         Button { selectedUser = user } label: {
                             ParticipantRow(
                                 user: user,
-                                isAdmin: viewModel.isAdmin,
+                                isAdmin: isOrganizer,
                                 isCurrentUser: isCurrentUser,
-                                connectionStatus: connectionStatus, onConnect: {
-                                guard let userId = user.id else { return }
-                                QoSRunner.fireAndForgetUserInitiated {
-                                    await viewModel.sendConnectionRequest(
-                                        toUserId: userId,
-                                        appointmentId: displayedAppointment.id
-                                    )
+                                connectionStatus: connectionStatus,
+                                onConnect: {
+                                    guard let userId = user.id else { return }
+                                    QoSRunner.fireAndForgetUserInitiated {
+                                        await viewModel.sendConnectionRequest(
+                                            toUserId: userId,
+                                            appointmentId: displayedAppointment.id
+                                        )
+                                    }
+                                },
+                                curUserTags: curUserTags,
+                                requestsViewModel: requestsViewModel,
+                                onConnectionAccepted: { userId in
+                                    viewModel.applyConnectionAccepted(with: userId)
+                                },
+                                onConnectionDeclined: { userId in
+                                    viewModel.applyConnectionDeclined(with: userId)
                                 }
-                                }, curUserTags: curUserTags
                                 )
                             .contentShape(RoundedRectangle(cornerRadius: 16))
                         }
@@ -520,6 +525,28 @@ struct AppointmentDetailView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $isFiltersShowing) {
+            ParticipantTagFilter(
+                selectedTags: viewModel.participantFilterTags,
+                onToggle: { tag in
+                    var next = viewModel.participantFilterTags
+                    if let index = next.firstIndex(of: tag) {
+                        next.remove(at: index)
+                    } else {
+                        next.append(tag)
+                    }
+                    usPage = 0
+                    viewModel.scheduleParticipantFilter(next, appointmentId: displayedAppointment.id, page: usPage)
+                },
+                onClear: {
+                    usPage = 0
+                    viewModel.scheduleParticipantFilter([], appointmentId: displayedAppointment.id, page: usPage)
+                },
+                allTags: displayedAppointment.allTags
+            )
+            .presentationDetents([.medium])
+            .presentationBackground(Color.appBackground)
         }
     }
 

@@ -29,6 +29,37 @@ struct AppointmentParticipantDTO: Decodable, Sendable {
     let userName: String
     let position: String
     let tags: [String]
+    let isAdmin: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case userName
+        case position
+        case tags
+        case isAdmin
+        case isOrganizer
+        case role
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decodeIfPresent(String.self, forKey: .name)
+        userName = try container.decode(String.self, forKey: .userName)
+        position = try container.decode(String.self, forKey: .position)
+        tags = try container.decode([String].self, forKey: .tags)
+
+        if let flag = try container.decodeIfPresent(Bool.self, forKey: .isAdmin) {
+            isAdmin = flag
+        } else if let flag = try container.decodeIfPresent(Bool.self, forKey: .isOrganizer) {
+            isAdmin = flag
+        } else if let role = try container.decodeIfPresent(String.self, forKey: .role) {
+            isAdmin = role.lowercased() == "organizer" || role.lowercased() == "admin"
+        } else {
+            isAdmin = false
+        }
+    }
 }
 
 struct AppointmentsParcipiantsPagginatetDTO: Decodable, Sendable {
@@ -131,7 +162,8 @@ extension AppointmentParticipantDTO {
             tags: tags.compactMap { Tag(apiValue: $0) },
             telegram: nil,
             email: nil,
-            about: nil
+            about: nil,
+            isEventOrganizer: isAdmin
         )
     }
 }

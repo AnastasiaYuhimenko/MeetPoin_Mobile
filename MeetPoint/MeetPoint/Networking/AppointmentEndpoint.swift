@@ -167,6 +167,26 @@ struct DeleteAppointment: Requestable {
     var headers: [HTTPHeaderKey: String] { AppNetworking.bearerHeaders }
 }
 
+struct AproveRequest: Requestable {
+    let userID: UUID
+    var path: String { "/connections/accept" }
+    var method: HTTPMethod { .POST }
+    var headers: [HTTPHeaderKey: String] { AppNetworking.bearerHeaders }
+    var parameters: [URLQueryItem] {
+        [URLQueryItem(name: "userId", value: userID.uuidString)]
+    }
+}
+
+struct DeclineRequest: Requestable {
+    let userID: UUID
+    var path: String { "/connections/decline" }
+    var method: HTTPMethod { .POST }
+    var headers: [HTTPHeaderKey: String] { AppNetworking.bearerHeaders }
+    var parameters: [URLQueryItem] {
+        [URLQueryItem(name: "userId", value: userID.uuidString)]
+    }
+}
+
 // MARK: - Requestable stucts, Events
 
 struct CreateEventRequest: Requestable {

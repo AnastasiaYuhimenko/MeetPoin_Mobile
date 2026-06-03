@@ -108,6 +108,8 @@ struct User: Identifiable {
     let telegram: String?
     let email: String?
     let about: String?
+    /// Организатор этого мероприятия (из ответа `/participants`, не роль текущего пользователя).
+    var isEventOrganizer: Bool = false
 
     /// Заголовок для UI: непустое `name`, иначе `userName`.
     var displayName: String {

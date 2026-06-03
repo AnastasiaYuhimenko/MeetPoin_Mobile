@@ -25,18 +25,21 @@ enum ConnectionStatusState: Equatable {
     case outgoing(requestId: UUID?)
     case contacts
     case unknown(raw: String)
+    case declined(requestId: UUID?)
 
     init(status: String, requestId: UUID?) {
         let normalized = status.lowercased()
         switch normalized {
         case "contacts", "accepted", "friend", "friends":
             self = .contacts
-        case "incoming", "incoming_request", "pending_incoming":
+        case "incoming", "incoming_request", "pending_incoming", "request_received":
             self = .incoming(requestId: requestId)
         case "outgoing", "outgoing_request", "pending_outgoing", "sent", "request_sent", "pending":
             self = .outgoing(requestId: requestId)
         case "none", "not_connected", "no_set", "not_set", "no_sent", "not_sent":
             self = .none
+        case "request_declined":
+            self = .declined(requestId: requestId)
         default:
             self = .unknown(raw: status)
         }
@@ -49,7 +52,7 @@ enum ConnectionStatusState: Equatable {
 
     var requestId: UUID? {
         switch self {
-        case .incoming(let id), .outgoing(let id):
+        case .incoming(let id), .outgoing(let id), .declined(let id):
             return id
         default:
             return nil
@@ -168,6 +171,15 @@ final class AppointmentDetailViewModel: ObservableObject {
         } catch {
             self.error = UserFacingNetworkMessage.message(for: error, context: .apiAction)
         }
+    }
+
+    func applyConnectionAccepted(with userId: UUID) {
+        connectionStatuses[userId] = .contacts
+        contactUserIds.insert(userId)
+    }
+
+    func applyConnectionDeclined(with userId: UUID) {
+        connectionStatuses[userId] = .declined(requestId: nil)
     }
 
     func loadConnectionStatus(for user: User) async {

@@ -108,6 +108,8 @@ struct UserCellSheet: UIViewRepresentable {
                 key += "|none"
             case .unknown(let raw):
                 key += "|unknown-\(raw)"
+            case .declined:
+                key += "|declined"
             }
         }
         return key
