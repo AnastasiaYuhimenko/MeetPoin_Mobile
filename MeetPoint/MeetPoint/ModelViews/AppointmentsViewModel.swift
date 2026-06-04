@@ -58,31 +58,54 @@ final class AppointmentsViewModel: ObservableObject {
     private let service = AppNetworking.shared
     private var hasLoaded = false
     private var allAppointments: [Appointment] = []
+    private var loadTask: Task<Void, Never>?
 
     func loadAppointments(force: Bool = false, page: Int) async {
         if hasLoaded && !force { return }
-        if isLoading { return }
 
-        isLoading = true
-        error = nil
-        defer { isLoading = false }
-        await reloadList(page: page, managesLoading: false)
+        if let loadTask {
+            await loadTask.value
+            return
+        }
+
+        let task = Task { @MainActor in
+            if !hasLoaded || appointments.isEmpty {
+                isLoading = true
+            }
+            defer {
+                isLoading = false
+                loadTask = nil
+            }
+            await performReload(page: page)
+        }
+        loadTask = task
+        await task.value
     }
 
     func reloadList(page: Int, managesLoading: Bool = true) async {
-        if managesLoading, isLoading { return }
-
         if managesLoading {
-            isLoading = true
-            error = nil
-        }
-
-        defer {
-            if managesLoading {
-                isLoading = false
+            if let loadTask {
+                await loadTask.value
+                return
             }
+
+            let task = Task { @MainActor in
+                isLoading = true
+                defer {
+                    isLoading = false
+                    loadTask = nil
+                }
+                await performReload(page: page)
+            }
+            loadTask = task
+            await task.value
+            return
         }
 
+        await performReload(page: page)
+    }
+
+    private func performReload(page: Int) async {
         self.page = page
 
         do {
@@ -97,13 +120,16 @@ final class AppointmentsViewModel: ObservableObject {
             if selectedOwnershipFilter == .all {
                 totalAppointmentsCount = allAppointments.count
             }
+            error = nil
             hasLoaded = true
         } catch {
             hasLoaded = false
             self.error = UserFacingNetworkMessage.message(for: error, context: .appointmentsList)
             self.appointments = []
+            if selectedOwnershipFilter == .all {
+                totalAppointmentsCount = 0
+            }
         }
-        
     }
 
     func fetchAppointment(id: UUID) async -> Appointment? {
@@ -171,6 +197,11 @@ final class AppointmentsViewModel: ObservableObject {
 
     var hasActiveFilters: Bool {
         selectedOwnershipFilter != .all || !selectedTags.isEmpty
+    }
+
+    /// Скелет, пока идёт загрузка и на экране нечего показать (нет кэша).
+    var shouldShowSkeleton: Bool {
+        isLoading && appointments.isEmpty && error == nil
     }
 
     // MARK: - Private

@@ -56,21 +56,28 @@ struct Appointments: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.isLoading && viewModel.totalAppointmentsCount == 0 {
-                    ProgressView("Загружаем мероприятия...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if viewModel.error != nil, viewModel.totalAppointmentsCount == 0 {
-                    errorState
-                } else if viewModel.totalAppointmentsCount == 0 {
-                    emptyState
-                } else {
-                    appointmentsList
+            SkeletonCrossfade(
+                showsSkeleton: viewModel.shouldShowSkeleton
+            ) {
+                Group {
+                    if viewModel.error != nil, viewModel.appointments.isEmpty {
+                        errorState
+                    } else if viewModel.appointments.isEmpty,
+                              !viewModel.isLoading,
+                              !viewModel.hasActiveFilters {
+                        appointmentEmptyState
+                    } else {
+                        appointmentsList
+                    }
                 }
+            } skeleton: {
+                AppointmentScreen()
             }
             .background(Color.appBackground)
             .navigationTitle("Мероприятия")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -123,6 +130,7 @@ struct Appointments: View {
                     },
                     curUserTags: profileViewModel.selectedTags.map(\.rawValue)
                 )
+                .id(appointment.id)
             }
             .sheet(isPresented: $showCreateEvent, onDismiss: {
                 QoSRunner.fireAndForgetUserInitiated {
@@ -139,6 +147,12 @@ struct Appointments: View {
                         deepLinkRouter.handle(url: url)
                     }
                 }
+            }
+            .sheet(isPresented: $isFiltrShowing) {
+                appointmentsFilters
+                    .presentationDetents([.height(320)])
+                    .presentationDragIndicator(.visible)
+                    .presentationBackground(Color.appBackground)
             }
             .overlay {
                 if isResolvingDeepLink {
@@ -158,18 +172,16 @@ struct Appointments: View {
                 try? await QoSRunner.userInitiated {
                     await viewModel.loadAppointments(page: page)
                 }
+                if let id = deepLinkRouter.pendingAppointmentId {
+                    try? await QoSRunner.userInitiated {
+                        await openAppointment(id: id)
+                    }
+                }
             }
             .onChange(of: deepLinkRouter.pendingAppointmentId) { _, newValue in
                 guard let id = newValue else { return }
                 QoSRunner.fireAndForgetUserInitiated {
                     await openAppointment(id: id)
-                }
-            }
-            .task {
-                if let id = deepLinkRouter.pendingAppointmentId {
-                    try? await QoSRunner.userInitiated {
-                        await openAppointment(id: id)
-                    }
                 }
             }
             .errorToast($viewModel.error)
@@ -191,48 +203,71 @@ struct Appointments: View {
     }
     @State var isFiltrShowing: Bool = false
 
-    private var emptyState: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                Image(systemName: "calendar.badge.exclamationmark")
-                    .font(.system(size: 52))
-                    .foregroundStyle(Color.appLightPurple)
-                Text("Нет мероприятий")
-                    .font(.headline)
-                    .foregroundStyle(Color.appPurple)
+    private var appointmentEmptyState: some View {
+        GeometryReader { geometry in
+            ScrollView {
+                VStack {
+                    appointmentsPlaceholderContent(
+                        systemImage: "calendar.badge.exclamationmark",
+                        title: "Нет мероприятий"
+                    )
+                }
+                .frame(
+                    maxWidth: .infinity,
+                    minHeight: geometry.size.height,
+                    alignment: .center
+                )
+
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .refreshable {
-            await refreshAppointments()
+            .refreshable {
+                await refreshAppointments()
+            }
         }
     }
 
     private var errorState: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                Image(systemName: "wifi.slash")
-                    .font(.system(size: 52))
-                    .foregroundStyle(Color.appLightPurple)
-                Text("Не удалось загрузить")
-                    .font(.headline)
-                    .foregroundStyle(Color.appPurple)
-                Text("Причина показана в уведомлении сверху")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                customButton(text: "Повторить") {
-                    QoSRunner.fireAndForgetUserInitiated {
-                        await viewModel.loadAppointments(force: true, page: viewModel.page)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 16) {
+                    appointmentsPlaceholderContent(
+                        systemImage: "wifi.slash",
+                        title: "Не удалось загрузить"
+                    )
+
+                    customButton(text: "Повторить") {
+                        Task {
+                            await viewModel.loadAppointments(
+                                force: true,
+                                page: viewModel.page
+                            )
+                        }
                     }
                 }
+                .frame(
+                    maxWidth: .infinity,
+                    minHeight: geometry.size.height,
+                    alignment: .center
+                )
             }
-            .padding()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .refreshable {
+                await refreshAppointments()
+            }
         }
-        .refreshable {
-            await refreshAppointments()
+    }
+
+    private func appointmentsPlaceholderContent(systemImage: String, title: String) -> some View {
+        VStack(spacing: 16) {
+            Image(systemName: systemImage)
+                .font(.system(size: 52))
+                .foregroundStyle(Color.appLightPurple)
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(Color.appPurple)
         }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 16)
+//        .padding(.top, 48)
+//        .padding(.bottom, 32)
     }
 
     func refreshAppointments() async {

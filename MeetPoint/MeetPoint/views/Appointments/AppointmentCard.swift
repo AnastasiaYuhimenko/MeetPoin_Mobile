@@ -43,18 +43,17 @@ struct AppointmentCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
+            HStack() {
                 Text(appointment.title)
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(Color.appPurple)
                     .lineLimit(2)
                     .truncationMode(.tail)
-                    .layoutPriority(1)
-                    .containerRelativeFrame(.horizontal, count: 3, span: 1, spacing: 0, alignment: .leading)
+
+                Spacer()
 
                 if appointment.isAdmin || appointment.isParticipating {
                     roleBadges
-                        .containerRelativeFrame(.horizontal, count: 2, spacing: 0, alignment: .trailing)
                 }
             }
 

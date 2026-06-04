@@ -119,7 +119,7 @@ struct ParticipantRow: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 16))
                             }
                         }
-                    case .some(.unknown(let raw)):
+                    case .some(.unknown(let _)):
                         Text("ничего")
                             .font(.subheadline)
                             .fontWeight(.medium)

@@ -140,6 +140,11 @@ struct CreateEventView: View {
             sectionLabel("Теги", systemImage: "tag")
             customTags(tags: $viewModel.selectedTags)
             customTagInput
+            if viewModel.isCustomTagTooLong {
+                Text("Тег не длиннее \(TagSelectionLimits.customTagMaxLength) символов")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
             customSelectedTags
             Text(tagSelectionHint)
                 .font(.caption)

@@ -24,6 +24,8 @@ enum position: String, CaseIterable, Identifiable {
 enum TagSelectionLimits {
     static let minimum = 1
     static let maximum = 9
+    /// Максимальная длина своего тега после нормализации (например `hello-world`).
+    static let customTagMaxLength = 10
 }
 
 struct Tag: RawRepresentable, CaseIterable, Identifiable, Hashable {

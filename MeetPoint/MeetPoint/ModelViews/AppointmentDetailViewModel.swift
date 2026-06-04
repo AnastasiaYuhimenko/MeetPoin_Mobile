@@ -66,6 +66,7 @@ final class AppointmentDetailViewModel: ObservableObject {
     @Published var participantFilterTags: [String] = []
     @Published var stats: AppointmentStats?
     @Published var isLoading = false
+    @Published private(set) var hasLoadedOnce = false
     @Published var isLoadingParticipants = false
     @Published var error: String?
     @Published var requestsSentTo: Set<UUID> = []
@@ -84,7 +85,10 @@ final class AppointmentDetailViewModel: ObservableObject {
     func loadData(appointmentId: UUID, page: Int) async {
         isLoading = true
         error = nil
-        defer { isLoading = false }
+        defer {
+            isLoading = false
+            hasLoadedOnce = true
+        }
 
         let participantsTask = Task(priority: .userInitiated) {
             try await fetchParticipants(

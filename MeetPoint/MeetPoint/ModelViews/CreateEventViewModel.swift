@@ -61,6 +61,11 @@ final class CreateEventViewModel: ObservableObject {
         return !selectedTags.contains(tag)
     }
 
+    var isCustomTagTooLong: Bool {
+        guard let apiValue = customTagApiValue else { return false }
+        return apiValue.count > TagSelectionLimits.customTagMaxLength
+    }
+
     func createEvent() async {
         guard isFormValid else { return }
 
@@ -116,15 +121,20 @@ final class CreateEventViewModel: ObservableObject {
     }
 
     private var normalizedCustomTag: Tag? {
+        guard let apiValue = customTagApiValue,
+              apiValue.count <= TagSelectionLimits.customTagMaxLength else { return nil }
+        return Tag(apiValue: apiValue)
+    }
+
+    private var customTagApiValue: String? {
         let words = customTagInput
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .trimmingCharacters(in: CharacterSet(charactersIn: "#"))
             .lowercased()
             .components(separatedBy: CharacterSet.alphanumerics.inverted)
             .filter { !$0.isEmpty }
-
         guard !words.isEmpty else { return nil }
-        return Tag(apiValue: words.joined(separator: "-"))
+        return words.joined(separator: "-")
     }
 
 }

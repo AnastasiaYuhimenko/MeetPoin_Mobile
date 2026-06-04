@@ -9,65 +9,53 @@ import SwiftUI
 
 struct RequestsView: View {
     @StateObject private var viewModel = RequestsViewModel()
+    @StateObject private var profileViewModel = ProfileViewModel()
     @State private var selectedUser: User?
     @State private var didRequestLoad = false
-    let profileVIewModel = ProfileViewModel()
+
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.isLoading && viewModel.requests.isEmpty {
-                    ProgressView("Загружаем заявки...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if viewModel.requests.isEmpty {
-                    emptyState
-                } else {
-                    requestsList
+            requestsScroll
+                .background(Color.appBackground)
+                .navigationTitle("Заявки")
+                .navigationBarTitleDisplayMode(.large)
+                .toolbarBackground(Color.appBackground, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .onAppear {
+                    guard !didRequestLoad else { return }
+                    didRequestLoad = true
+                    QoSRunner.fireAndForgetUserInitiated {
+                        await viewModel.loadRequests()
+                    }
                 }
-            }
-            .background(Color.appBackground)
-            .navigationTitle("Заявки")
-            .navigationBarTitleDisplayMode(.large)
-            .onAppear {
-                guard !didRequestLoad else { return }
-                didRequestLoad = true
-                QoSRunner.fireAndForgetUserInitiated {
-                    await viewModel.loadRequests()
+                .errorToast($viewModel.error)
+                .sheet(item: $selectedUser) { user in
+                    VStack {
+                        UserCellSheet(user: user, isFriend: false, hasOffer: true)
+                            .padding(.top, 24)
+                        Spacer()
+                    }
+                    .appScreenBackground()
+                    .presentationDetents([.medium])
+                    .presentationBackground(Color.appBackground)
                 }
-            }
-            .errorToast($viewModel.error)
-            .sheet(item: $selectedUser) { user in
-                VStack {
-                    UserCellSheet(user: user, isFriend: false, hasOffer: true)
-                        .padding(.top, 24)
-                    Spacer()
-                }
-                .appScreenBackground()
-                .presentationDetents([.medium])
-                .presentationBackground(Color.appBackground)
-            }
         }
     }
 
-    private var requestsList: some View {
+    private var requestsScroll: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
-                ForEach(viewModel.requests) { request in
-                    RequestRow(
-                        request: request,
-                        onTap: { selectedUser = request.fromUser },
-                        onAccept: {
-                            QoSRunner.fireAndForgetUserInitiated {
-                                await viewModel.acceptRequest(request.id)
-                            }
-                        },
-                        onDecline: {
-                            QoSRunner.fireAndForgetUserInitiated {
-                                await viewModel.declineRequest(request.id)
-                            }
-                        }, curUserTags: profileVIewModel.selectedTags.map { $0.rawValue }
-                    )
+            Group {
+                if viewModel.isLoading && viewModel.requests.isEmpty {
+                    ProgressView("Загружаем заявки...")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 120)
+                } else if viewModel.requests.isEmpty {
+                    emptyStateContent
+                } else {
+                    requestsContent
                 }
             }
+            .frame(maxWidth: .infinity)
             .padding(.horizontal, 16)
             .padding(.top, 8)
             .padding(.bottom, 24)
@@ -77,34 +65,50 @@ struct RequestsView: View {
         }
     }
 
-    private var emptyState: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                Image(systemName: "bell.slash")
-                    .font(.system(size: 52))
-                    .foregroundStyle(Color.appLightPurple)
-                Text("Новых заявок нет")
-                    .font(.headline)
-                    .foregroundStyle(Color.appPurple)
-                Text("Здесь появятся запросы на знакомство\nот участников мероприятий")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding()
+    private var emptyStateContent: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "bell.slash")
+                .font(.system(size: 52))
+                .foregroundStyle(Color.appLightPurple)
+            Text("Новых заявок нет")
+                .font(.headline)
+                .foregroundStyle(Color.appPurple)
+            Text("Здесь появятся запросы на знакомство\nот участников мероприятий")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
-        .refreshable {
-            await refreshRequests()
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 120)
+    }
+
+    private var requestsContent: some View {
+        LazyVStack(spacing: 12) {
+            ForEach(viewModel.requests) { request in
+                RequestRow(
+                    request: request,
+                    onTap: { selectedUser = request.fromUser },
+                    onAccept: {
+                        Task {
+                            await viewModel.acceptRequest(request.id)
+                        }
+                    },
+                    onDecline: {
+                        Task {
+                            await viewModel.declineRequest(request.id)
+                        }
+                    },
+                    curUserTags: profileViewModel.selectedTags.map(\.rawValue)
+                )
+            }
         }
     }
 
     private func refreshRequests() async {
-        try? await QoSRunner.userInitiated {
-            await viewModel.loadRequests(force: true)
-        }
+        await viewModel.loadRequests(force: true)
     }
 }
+
 
 // MARK: - Request Row
 

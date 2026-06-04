@@ -11,23 +11,18 @@ struct SkeletonCrossfade<Content: View, Skeleton: View>: View {
     var minimumSkeletonDuration: TimeInterval = 0.35
     @ViewBuilder var content: () -> Content
     @ViewBuilder var skeleton: () -> Skeleton
-
+    
     @State private var skeletonOpacity: Double = 1
     @State private var skeletonShownAt: Date?
-
+    
     var body: some View {
         ZStack(alignment: .top) {
-            if skeletonOpacity < 1 {
-                content()
-                    .opacity(1 - skeletonOpacity)
-                    .allowsHitTesting(skeletonOpacity < 0.5)
-            }
-
-            if skeletonOpacity > 0 {
-                skeleton()
-                    .opacity(skeletonOpacity)
-                    .allowsHitTesting(skeletonOpacity >= 0.5)
-            }
+            content()
+                .opacity(1 - skeletonOpacity)
+                .allowsHitTesting(skeletonOpacity < 0.5)
+            skeleton()
+                .opacity(skeletonOpacity)
+                .allowsHitTesting(skeletonOpacity >= 0.5)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onAppear { syncSkeletonVisibility(animated: false) }
@@ -35,7 +30,7 @@ struct SkeletonCrossfade<Content: View, Skeleton: View>: View {
             syncSkeletonVisibility(animated: true)
         }
     }
-
+    
     private func syncSkeletonVisibility(animated: Bool) {
         if showsSkeleton {
             skeletonShownAt = Date()

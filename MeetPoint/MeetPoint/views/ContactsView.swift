@@ -8,9 +8,10 @@
 import SwiftUI
 
 struct ContactsView: View {
-    @StateObject private var viewModel = ContactsViewModel()
+    @StateObject private var viewModel =  ContactsViewModel()
     @State private var selectedUser: User?
     @State private var didRequestLoad = false
+    
 
     var body: some View {
         NavigationStack {
@@ -71,24 +72,30 @@ struct ContactsView: View {
     }
 
     private var emptyState: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                Image(systemName: "person.2.slash")
-                    .font(.system(size: 52))
-                    .foregroundStyle(Color.appLightPurple)
-                Text("Пока нет контактов")
-                    .font(.headline)
-                    .foregroundStyle(Color.appPurple)
-                Text("Здесь появятся люди, с которыми\nсостоялось взаимное знакомство")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 16) {
+                    
+                    Image(systemName: "person.2.slash")
+                        .font(.system(size: 52))
+                        .foregroundStyle(Color.appLightPurple)
+                    Text("Пока нет контактов")
+                        .font(.headline)
+                        .foregroundStyle(Color.appPurple)
+                    Text("Здесь появятся люди, с которыми\nсостоялось взаимное знакомство")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(
+                    maxWidth: .infinity,
+                    minHeight: geometry.size.height,
+                    alignment: .center
+                )                .padding()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding()
-        }
-        .refreshable {
-            await refreshContacts()
+            .refreshable {
+                await refreshContacts()
+            }
         }
     }
 
@@ -106,9 +113,16 @@ private struct ContactRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: "person.circle.fill")
-                .font(.system(size: 42))
-                .foregroundStyle(Color.appLightPurple)
+            ZStack {
+                Circle()
+                    .fill(Color.appLightPurple)
+                    .frame(width: 40, height: 40)
+                    
+                Text("\(user.displayName.prefix(2))")
+                    .foregroundStyle(Color.white)
+                    .font(.title2)
+            }
+            
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(user.displayName)
@@ -121,27 +135,73 @@ private struct ContactRow: View {
 
             Spacer()
 
-            VStack(alignment: .trailing, spacing: 4) {
+            VStack(alignment: .leading, spacing: 4) {
                 if let telegram = user.telegram {
-                    Label(telegram, systemImage: "paperplane.fill")
+                    let cleanUsername = telegram.replacingOccurrences(of: "@", with: "")
+                    Button {
+                        if let url = URL(string: "https://t.me/\(cleanUsername)") {
+                            UIApplication.shared.open(url)
+                        }
+                        
+                    } label: {
+                        HStack {
+                            Label(telegram, systemImage: "paperplane.fill")
+                                .font(.caption2)
+                                .foregroundStyle(Color.appLightPurple)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                        }
+                    }
+                    .padding(.vertical, 8)
+                } else {
+                    Label("Не указан", systemImage: "paperplane.fill")
                         .font(.caption2)
                         .foregroundStyle(Color.appLightPurple)
+                        .padding(.bottom)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .padding(.vertical, 8)
+
                 }
                 if let email = user.email {
-                    Label(email, systemImage: "envelope.fill")
+                    Divider()
+                    Button {
+                        if let url = URL(string: "mailto:\(email)") {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        HStack {
+                            Label(email, systemImage: "envelope.fill")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                        }
+                    }
+                    .padding(.vertical, 8)
+                } else {
+                    Divider()
+                    Label("Не указан", systemImage: "envelope.fill")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
+                        .padding(.vertical, 8)
                 }
             }
+            .containerRelativeFrame(.horizontal, count: 3, spacing: 0, alignment: .trailing)
         }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.appCard)
+                .fill(Color.appYellow.opacity(0.05))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(Color.appLightPurple.opacity(0.35), lineWidth: 1)
                 )
+               
         )
     }
 }

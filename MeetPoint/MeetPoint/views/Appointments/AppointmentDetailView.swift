@@ -60,6 +60,7 @@ struct AppointmentDetailView: View {
     @State private var showJoinTagsSheet = false
     @State private var joinTags: Set<Tag> = []
     @State private var usPage: Int = 0
+    @State private var scrollResetTrigger = 0
     let curUserTags: [String]
     init(
         appointment: Appointment,
@@ -83,47 +84,32 @@ struct AppointmentDetailView: View {
     private var eventShareLink: String {
         AppNetworking.eventShareLink(for: displayedAppointment.id)
     }
+    private var showsDetailSkeleton: Bool {
+        viewModel.isLoading && !viewModel.hasLoadedOnce
+    }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                eventHeader
-
-                if !viewModel.isLoading {
-                    joinEventSection
-                }
-
-                eventQRCard
-
-                Divider()
-
-                if viewModel.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                } else if viewModel.isAdmin {
-                    TabSwitcher(selected: $selectedTab)
-                }
-
-                if !viewModel.isLoading {
-                    if viewModel.isAdmin {
-                        switch selectedTab {
-                        case .participants: participantsSection
-                        case .statistics:  statisticsSection
-                        }
-                    } else {
-                        participantsSection
-                    }
-                }
-            }
-            .padding(20)
+        SkeletonCrossfade(
+            showsSkeleton: showsDetailSkeleton,
+            minimumSkeletonDuration: 0.35
+        ) {
+            detailContentLayer
+        } skeleton: {
+            detailSkeletonLayer
         }
-        .refreshable {
-            await refreshAppointmentDetail()
-        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.appBackground)
+        .onChange(of: showsDetailSkeleton) { _, showsSkeleton in
+            guard !showsSkeleton else { return }
+            scrollResetTrigger += 1
+        }
+        .task(id: displayedAppointment.id) {
+            await viewModel.loadData(appointmentId: displayedAppointment.id, page: usPage)
+        }
         .navigationTitle(displayedAppointment.title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Color.appBackground, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
         .toolbar {
             if viewModel.isAdmin && !viewModel.isLoading {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -163,45 +149,106 @@ struct AppointmentDetailView: View {
                             appointmentId: displayedAppointment.id,
                             tags: joinTags
                         )
-                        
+
                         if viewModel.error == nil {
                             showJoinTagsSheet = false
                         }
                     }
-        },
+                },
                 onCancel: { showJoinTagsSheet = false }
             )
         }
-        .task { await viewModel.loadData(appointmentId: displayedAppointment.id, page: usPage) }
         .errorToast($viewModel.error)
         .sheet(item: $selectedUser) { user in
-            let fallbackStatus: ConnectionStatusState? = {
-                guard let id = user.id else { return nil }
-                if viewModel.contactUserIds.contains(id) { return .contacts }
-                if viewModel.requestsSentTo.contains(id) { return .outgoing(requestId: nil) }
-                return nil
-            }()
-            let connectionStatus = user.id.flatMap { viewModel.connectionStatuses[$0] } ?? fallbackStatus
-            let isContact = connectionStatus == .contacts
-            let isCurrentUser = user.id.map { $0 == viewModel.currentUserId } ?? false
-            VStack {
-                UserCellSheet(
-                    user: user,
-                    isFriend: isContact,
-                    hasOffer: false,
-                    isSelf: isCurrentUser,
-                    connectionState: connectionStatus
+            participantUserSheet(user: user)
+        }
+    }
+
+    private var detailSkeletonLayer: some View {
+        ScrollView {
+            AppointmentDetailSceleton()
+        }
+        .scrollDisabled(true)
+    }
+
+    @ViewBuilder
+    private var detailContentLayer: some View {
+        if viewModel.hasLoadedOnce {
+            loadedDetailScroll
+        } else {
+            Color.clear
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    private var loadedDetailScroll: some View {
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    eventHeader
+
+                    joinEventSection
+
+                    eventQRCard
+
+                    Divider()
+
+                    if viewModel.isAdmin {
+                        TabSwitcher(selected: $selectedTab)
+                    }
+
+                    if viewModel.isAdmin {
+                        switch selectedTab {
+                        case .participants: participantsSection
+                        case .statistics:  statisticsSection
+                        }
+                    } else {
+                        participantsSection
+                    }
+                }
+                .padding(20)
+                .frame(
+                    maxWidth: .infinity,
+                    minHeight: geometry.size.height,
+                    alignment: .top
                 )
-                    .padding(.top, 24)
-                Spacer()
             }
-            .appScreenBackground()
-            .presentationDetents([.medium])
-            .presentationBackground(Color.appBackground)
-            .task {
-                guard !isCurrentUser else { return }
-                await viewModel.loadConnectionStatus(for: user)
+            .defaultScrollAnchor(.top)
+            .resetParentScrollOffset(trigger: scrollResetTrigger)
+            .refreshable {
+                await refreshAppointmentDetail()
             }
+        }
+    }
+
+    @ViewBuilder
+    private func participantUserSheet(user: User) -> some View {
+        let fallbackStatus: ConnectionStatusState? = {
+            guard let id = user.id else { return nil }
+            if viewModel.contactUserIds.contains(id) { return .contacts }
+            if viewModel.requestsSentTo.contains(id) { return .outgoing(requestId: nil) }
+            return nil
+        }()
+        let connectionStatus = user.id.flatMap { viewModel.connectionStatuses[$0] } ?? fallbackStatus
+        let isContact = connectionStatus == .contacts
+        let isCurrentUser = user.id.map { $0 == viewModel.currentUserId } ?? false
+        VStack {
+            UserCellSheet(
+                user: user,
+                isFriend: isContact,
+                hasOffer: false,
+                isSelf: isCurrentUser,
+                connectionState: connectionStatus
+            )
+            .padding(.top, 24)
+            Spacer()
+        }
+        .appScreenBackground()
+        .presentationDetents([.medium])
+        .presentationBackground(Color.appBackground)
+        .task {
+            guard !isCurrentUser else { return }
+            await viewModel.loadConnectionStatus(for: user)
         }
     }
 
@@ -237,22 +284,7 @@ struct AppointmentDetailView: View {
     @ViewBuilder
     private var joinEventSection: some View {
         if !viewModel.isAdmin {
-            if viewModel.isRegistered {
-                Label("Вы участник мероприятия", systemImage: "checkmark.circle.fill")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(Color.appLightPurple)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.appCard)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.appLightPurple.opacity(0.4), lineWidth: 1)
-                            )
-                    )
-            } else {
+            if !viewModel.isRegistered {
                 Button {
                     joinTags = Set(displayedAppointment.tags)
                     showJoinTagsSheet = true
@@ -405,7 +437,7 @@ struct AppointmentDetailView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            QRCodeImageView(content: eventShareLink, size: 200)
+            QRCodeImageView(content: eventShareLink, size: 150)
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
@@ -438,11 +470,12 @@ struct AppointmentDetailView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.appCard)
+                .fill(Color.appYellow.opacity(0.05))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.appLightPurple.opacity(0.4), lineWidth: 1)
+                        .stroke(Color.appLightPurple.opacity(0.35), lineWidth: 1)
                 )
+               
         )
     }
 
@@ -478,7 +511,7 @@ struct AppointmentDetailView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
             } else {
-                LazyVStack(spacing: 12) {
+                VStack(spacing: 12) {
                     ForEach(viewModel.participants) { user in
                         let isCurrentUser = user.id.map { $0 == viewModel.currentUserId } ?? false
                         let cachedStatus = user.id.flatMap { viewModel.connectionStatuses[$0] }

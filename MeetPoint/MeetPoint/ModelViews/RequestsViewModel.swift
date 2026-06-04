@@ -30,7 +30,6 @@ final class RequestsViewModel: ObservableObject {
         if isLoading { return }
 
         isLoading = true
-        error = nil
         defer { isLoading = false }
 
         let resource = Resource<[IncomingConnectionDTO], GetIncomingRequestsEndpoint>(
@@ -46,6 +45,7 @@ final class RequestsViewModel: ObservableObject {
                 )
             }
             hasLoaded = true
+            error = nil
         } catch {
             self.error = UserFacingNetworkMessage.message(for: error, context: .apiAction)
         }

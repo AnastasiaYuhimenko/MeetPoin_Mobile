@@ -8,30 +8,30 @@
 import SwiftUI
 
 extension Appointments {
+    @ViewBuilder
     var appointmentsList: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                if viewModel.appointments.isEmpty {
-                    VStack(spacing: 10) {
-                        Spacer()
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                            .font(.system(size: 34))
-                            .foregroundStyle(Color.appLightPurple)
-                        Text("По выбранным фильтрам ничего не найдено")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                        
-                        if viewModel.hasActiveFilters {
-                            customButton(text: "Сбросить фильтры") {
-                                viewModel.resetAllFilters()
-                            }
-                        }
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 28)
-                } else {
+        if viewModel.appointments.isEmpty && viewModel.hasActiveFilters {
+            VStack(spacing: 10) {
+                Spacer()
+                Image(systemName: "line.3.horizontal.decrease.circle")
+                    .font(.system(size: 34))
+                    .foregroundStyle(Color.appLightPurple)
+                Text("По выбранным фильтрам ничего не найдено")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                
+                customButton(text: "Сбросить фильтры") {
+                    viewModel.resetAllFilters()
+                }
+                Spacer()
+                
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        } else {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    
                     LazyVStack(spacing: 14) {
                         ForEach(viewModel.appointments) { appointment in
                             Button {
@@ -47,15 +47,11 @@ extension Appointments {
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
-            .padding(.bottom, 24)
-        }
-        .refreshable {
-            await refreshAppointments()
-        }
-        .sheet(isPresented: $isFiltrShowing) {
-            appointmentsFilters
-                .presentationDetents([.height(320)])
-                .presentationDragIndicator(.visible)
+            .refreshable {
+                await refreshAppointments()
+            }
         }
     }
 }
+
+

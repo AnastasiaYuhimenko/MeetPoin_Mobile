@@ -46,15 +46,23 @@ struct ErrorToast: View {
 
 struct ErrorToastModifier: ViewModifier {
     @Binding var message: String?
+    @State private var toastMessage: String?
 
     func body(content: Content) -> some View {
         content
+            .onChange(of: message) { _, newValue in
+                guard let newValue else { return }
+                toastMessage = newValue
+            }
+            .onAppear {
+                if let message {
+                    toastMessage = message
+                }
+            }
             .overlay(alignment: .top) {
-                if let msg = message {
+                if let msg = toastMessage {
                     ErrorToast(message: msg) {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            message = nil
-                        }
+                        dismissToast(for: msg)
                     }
                     .transition(
                         .asymmetric(
@@ -64,14 +72,22 @@ struct ErrorToastModifier: ViewModifier {
                     )
                     .task(id: msg) {
                         try? await Task.sleep(nanoseconds: 4_000_000_000)
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            message = nil
-                        }
+                        guard !Task.isCancelled else { return }
+                        dismissToast(for: msg)
                     }
                     .zIndex(999)
                 }
             }
-            .animation(.spring(response: 0.45, dampingFraction: 0.78), value: message)
+            .animation(.spring(response: 0.45, dampingFraction: 0.78), value: toastMessage)
+    }
+
+    private func dismissToast(for displayedMessage: String) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            toastMessage = nil
+        }
+        if message == displayedMessage {
+            message = nil
+        }
     }
 }
 
