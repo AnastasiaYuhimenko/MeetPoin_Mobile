@@ -9,22 +9,44 @@ import SwiftUI
 
 struct RequestsView: View {
     @StateObject private var viewModel = RequestsViewModel()
-    @StateObject private var profileViewModel = ProfileViewModel()
     @State private var selectedUser: User?
     @State private var didRequestLoad = false
-
+    let profileVIewModel = ProfileViewModel()
     var body: some View {
+        
         NavigationStack {
-            requestsScroll
+            GeometryReader { geometry in
+                
+                ScrollView {
+                    if viewModel.isLoading && viewModel.requests.isEmpty {
+                        ProgressView("Загружаем заявки...")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if viewModel.requests.isEmpty {
+                        emptyState
+                            .frame(
+                                maxWidth: .infinity,
+                                minHeight: geometry.size.height,
+                                alignment: .center
+                            )
+                    } else {
+                        requestsList
+                            .frame(
+                                maxWidth: .infinity,
+                                minHeight: geometry.size.height,
+                                alignment: .center
+                            )
+                    }
+                }
+                .refreshable {
+                    await refreshRequests()
+                }
                 .background(Color.appBackground)
                 .navigationTitle("Заявки")
                 .navigationBarTitleDisplayMode(.large)
-                .toolbarBackground(Color.appBackground, for: .navigationBar)
-                .toolbarBackground(.visible, for: .navigationBar)
                 .onAppear {
                     guard !didRequestLoad else { return }
                     didRequestLoad = true
-                    QoSRunner.fireAndForgetUserInitiated {
+                    Task {
                         await viewModel.loadRequests()
                     }
                 }
@@ -39,73 +61,67 @@ struct RequestsView: View {
                     .presentationDetents([.medium])
                     .presentationBackground(Color.appBackground)
                 }
+            }
         }
     }
-
-    private var requestsScroll: some View {
-        ScrollView {
-            Group {
-                if viewModel.isLoading && viewModel.requests.isEmpty {
-                    ProgressView("Загружаем заявки...")
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 120)
-                } else if viewModel.requests.isEmpty {
-                    emptyStateContent
-                } else {
-                    requestsContent
+    private var requestsList: some View {
+//        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(viewModel.requests) { request in
+                    RequestRow(
+                        request: request,
+                        onTap: { selectedUser = request.fromUser },
+                        onAccept: {
+                            QoSRunner.fireAndForgetUserInitiated {
+                                await viewModel.acceptRequest(request.id)
+                            }
+                        },
+                        onDecline: {
+                            QoSRunner.fireAndForgetUserInitiated {
+                                await viewModel.declineRequest(request.id)
+                            }
+                        }, curUserTags: profileVIewModel.selectedTags.map { $0.rawValue }
+                    )
                 }
             }
-            .frame(maxWidth: .infinity)
             .padding(.horizontal, 16)
             .padding(.top, 8)
             .padding(.bottom, 24)
-        }
-        .refreshable {
-            await refreshRequests()
-        }
+//        }
+        
     }
 
-    private var emptyStateContent: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "bell.slash")
-                .font(.system(size: 52))
-                .foregroundStyle(Color.appLightPurple)
-            Text("Новых заявок нет")
-                .font(.headline)
-                .foregroundStyle(Color.appPurple)
-            Text("Здесь появятся запросы на знакомство\nот участников мероприятий")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 120)
-    }
-
-    private var requestsContent: some View {
-        LazyVStack(spacing: 12) {
-            ForEach(viewModel.requests) { request in
-                RequestRow(
-                    request: request,
-                    onTap: { selectedUser = request.fromUser },
-                    onAccept: {
-                        Task {
-                            await viewModel.acceptRequest(request.id)
-                        }
-                    },
-                    onDecline: {
-                        Task {
-                            await viewModel.declineRequest(request.id)
-                        }
-                    },
-                    curUserTags: profileViewModel.selectedTags.map(\.rawValue)
-                )
-            }
-        }
+    private var emptyState: some View {
+//        GeometryReader { geometry in
+//            ScrollView {
+                VStack {
+                    Spacer()
+                    Image(systemName: "bell.slash")
+                        .font(.system(size: 52))
+                        .foregroundStyle(Color.appLightPurple)
+                    Text("Новых заявок нет")
+                        .font(.headline)
+                        .foregroundStyle(Color.appPurple)
+                    Text("Здесь появятся запросы на знакомство\nот участников мероприятий")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    Spacer()
+                }
+//                .frame(maxWidth: .infinity, maxHeight: geometry.size.height, alignment: .center)
+                
+//                .padding()
+//            }
+//            .refreshable {
+//                await refreshRequests()
+//            }
+//        }
     }
 
     private func refreshRequests() async {
-        await viewModel.loadRequests(force: true)
+        try? await QoSRunner.userInitiated {
+            await viewModel.loadRequests(force: true)
+        }
     }
 }
 
