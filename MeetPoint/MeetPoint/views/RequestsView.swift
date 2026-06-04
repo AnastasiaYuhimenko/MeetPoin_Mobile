@@ -51,19 +51,21 @@ struct RequestsView: View {
                     }
                 }
                 .errorToast($viewModel.error)
-                .sheet(item: $selectedUser) { user in
-                    VStack {
-                        UserCellSheet(user: user, isFriend: false, hasOffer: true)
-                            .padding(.top, 24)
-                        Spacer()
-                    }
-                    .appScreenBackground()
-                    .presentationDetents([.medium])
-                    .presentationBackground(Color.appBackground)
+                .navigationDestination(item: $selectedUser) { user in
+                    UserProfileDestination(
+                        user: user,
+                        connectionStatus: incomingConnectionStatus(for: user),
+                        requestsViewModel: viewModel
+                    )
                 }
             }
         }
     }
+    private func incomingConnectionStatus(for user: User) -> ConnectionStatusState {
+        let requestId = viewModel.requests.first { $0.fromUser.id == user.id }?.id
+        return .incoming(requestId: requestId)
+    }
+
     private var requestsList: some View {
 //        ScrollView {
             LazyVStack(spacing: 12) {

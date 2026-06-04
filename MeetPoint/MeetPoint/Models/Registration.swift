@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-enum position: String, CaseIterable, Identifiable {
+enum position: String, CaseIterable, Identifiable, Hashable {
     case frontend
     case backend
     case mobile
@@ -99,7 +99,7 @@ extension Tag {
     }
 }
 
-struct User: Identifiable {
+struct User: Identifiable, Hashable {
     let id: UUID?
     /// Отображаемое имя с бэкенда (`name`), опционально при регистрации.
     let name: String?

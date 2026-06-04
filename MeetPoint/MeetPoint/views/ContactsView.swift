@@ -36,15 +36,11 @@ struct ContactsView: View {
                 }
             }
             .errorToast($viewModel.error)
-            .sheet(item: $selectedUser) { user in
-                VStack {
-                    UserCellSheet(user: user, isFriend: true, hasOffer: false)
-                        .padding(.top, 24)
-                    Spacer()
-                }
-                .appScreenBackground()
-                .presentationDetents([.medium])
-                .presentationBackground(Color.appBackground)
+            .navigationDestination(item: $selectedUser) { user in
+                UserProfileDestination(
+                    user: user,
+                    connectionStatus: .contacts
+                )
             }
         }
     }

@@ -62,3 +62,37 @@ struct LoginResponseDTO: Decodable, Sendable {
 struct UsernameCheckResponseDTO: Decodable, Sendable {
     let isAvailable: Bool
 }
+
+extension UserResponseDTO {
+    func toUser(merging fallback: User) -> User {
+        User(
+            id: UUID(uuidString: id) ?? fallback.id,
+            name: name ?? fallback.name,
+            userName: userName,
+            position: MeetPoint.position(rawValue: position) ?? fallback.position,
+            password: fallback.password,
+            tags: tags.compactMap { Tag(apiValue: $0) },
+            telegram: telegram ?? fallback.telegram,
+            email: email ?? fallback.email,
+            about: about ?? fallback.about,
+            isEventOrganizer: fallback.isEventOrganizer
+        )
+    }
+}
+
+extension UserProfileDTO {
+    func toUser(merging fallback: User) -> User {
+        User(
+            id: UUID(uuidString: id) ?? fallback.id,
+            name: name ?? fallback.name,
+            userName: userName,
+            position: MeetPoint.position(rawValue: position) ?? fallback.position,
+            password: fallback.password,
+            tags: tags.compactMap { Tag(apiValue: $0) },
+            telegram: telegram ?? fallback.telegram,
+            email: email ?? fallback.email,
+            about: about ?? fallback.about,
+            isEventOrganizer: fallback.isEventOrganizer
+        )
+    }
+}

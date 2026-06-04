@@ -38,6 +38,18 @@ struct GetMyProfileRequest: Requestable {
     var headers: [HTTPHeaderKey: String] { AppNetworking.bearerHeaders }
 }
 
+struct GetUserProfileByIdRequest: Requestable {
+    let userId: UUID
+    var path: String { "/users/\(userId.uuidString.lowercased())" }
+    var headers: [HTTPHeaderKey: String] { AppNetworking.bearerHeaders }
+}
+
+struct GetUserProfileByUsernameRequest: Requestable {
+    let username: String
+    var path: String { "/users/\(username)" }
+    var headers: [HTTPHeaderKey: String] { AppNetworking.bearerHeaders }
+}
+
 struct UpdateMyProfileRequest: Requestable {
     typealias Body = UserUpdateDTO
     let dto: UserUpdateDTO

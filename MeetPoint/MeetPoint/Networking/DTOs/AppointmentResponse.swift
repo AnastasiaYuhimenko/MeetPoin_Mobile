@@ -30,6 +30,9 @@ struct AppointmentParticipantDTO: Decodable, Sendable {
     let position: String
     let tags: [String]
     let isAdmin: Bool
+    let about: String?
+    let telegram: String?
+    let email: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -40,6 +43,9 @@ struct AppointmentParticipantDTO: Decodable, Sendable {
         case isAdmin
         case isOrganizer
         case role
+        case about
+        case telegram
+        case email
     }
 
     init(from decoder: Decoder) throws {
@@ -49,6 +55,9 @@ struct AppointmentParticipantDTO: Decodable, Sendable {
         userName = try container.decode(String.self, forKey: .userName)
         position = try container.decode(String.self, forKey: .position)
         tags = try container.decode([String].self, forKey: .tags)
+        about = try container.decodeIfPresent(String.self, forKey: .about)
+        telegram = try container.decodeIfPresent(String.self, forKey: .telegram)
+        email = try container.decodeIfPresent(String.self, forKey: .email)
 
         if let flag = try container.decodeIfPresent(Bool.self, forKey: .isAdmin) {
             isAdmin = flag
@@ -93,6 +102,7 @@ struct ContactDTO: Decodable, Sendable {
     let tags: [String]
     let telegram: String?
     let email: String?
+    let about: String?
 }
 
 struct ConnectionStatusDTO: Decodable, Sendable{
@@ -160,9 +170,9 @@ extension AppointmentParticipantDTO {
             position: pos,
             password: "",
             tags: tags.compactMap { Tag(apiValue: $0) },
-            telegram: nil,
-            email: nil,
-            about: nil,
+            telegram: telegram,
+            email: email,
+            about: about,
             isEventOrganizer: isAdmin
         )
     }
@@ -180,7 +190,7 @@ extension ContactDTO {
             tags: tags.compactMap { Tag(apiValue: $0) },
             telegram: telegram,
             email: email,
-            about: nil
+            about: about
         )
     }
 }

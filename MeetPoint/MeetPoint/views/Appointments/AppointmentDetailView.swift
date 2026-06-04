@@ -54,6 +54,7 @@ struct AppointmentDetailView: View {
     var onAppointmentDeleted: (() -> Void)?
 
     @StateObject private var viewModel = AppointmentDetailViewModel()
+    @StateObject private var requestsViewModel = RequestsViewModel()
     @State private var selectedTab: DetailTab = .participants
     @State private var selectedUser: User?
     @State private var showEditAppointment = false
@@ -159,8 +160,8 @@ struct AppointmentDetailView: View {
             )
         }
         .errorToast($viewModel.error)
-        .sheet(item: $selectedUser) { user in
-            participantUserSheet(user: user)
+        .navigationDestination(item: $selectedUser) { user in
+            participantUserDestination(user: user)
         }
     }
 
@@ -222,7 +223,7 @@ struct AppointmentDetailView: View {
     }
 
     @ViewBuilder
-    private func participantUserSheet(user: User) -> some View {
+    private func participantUserDestination(user: User) -> some View {
         let fallbackStatus: ConnectionStatusState? = {
             guard let id = user.id else { return nil }
             if viewModel.contactUserIds.contains(id) { return .contacts }
@@ -230,26 +231,32 @@ struct AppointmentDetailView: View {
             return nil
         }()
         let connectionStatus = user.id.flatMap { viewModel.connectionStatuses[$0] } ?? fallbackStatus
-        let isContact = connectionStatus == .contacts
         let isCurrentUser = user.id.map { $0 == viewModel.currentUserId } ?? false
-        VStack {
-            UserCellSheet(
-                user: user,
-                isFriend: isContact,
-                hasOffer: false,
-                isSelf: isCurrentUser,
-                connectionState: connectionStatus
-            )
-            .padding(.top, 24)
-            Spacer()
-        }
-        .appScreenBackground()
-        .presentationDetents([.medium])
-        .presentationBackground(Color.appBackground)
-        .task {
-            guard !isCurrentUser else { return }
-            await viewModel.loadConnectionStatus(for: user)
-        }
+        UserProfileDestination(
+            user: user,
+            connectionStatus: connectionStatus,
+            isCurrentUser: isCurrentUser,
+            onConnect: {
+                guard let userId = user.id else { return }
+                QoSRunner.fireAndForgetUserInitiated {
+                    await viewModel.sendConnectionRequest(
+                        toUserId: userId,
+                        appointmentId: displayedAppointment.id
+                    )
+                }
+            },
+            requestsViewModel: requestsViewModel,
+            onConnectionAccepted: { userId in
+                viewModel.applyConnectionAccepted(with: userId)
+            },
+            onConnectionDeclined: { userId in
+                viewModel.applyConnectionDeclined(with: userId)
+            },
+            onLoadConnectionStatus: {
+                guard !isCurrentUser else { return }
+                await viewModel.loadConnectionStatus(for: user)
+            }
+        )
     }
 
     private func refreshAppointmentDetail() async {
@@ -480,7 +487,6 @@ struct AppointmentDetailView: View {
     }
 
     @State private var isFiltersShowing = false
-    @StateObject private var requestsViewModel = RequestsViewModel()
 
     private var participantsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
