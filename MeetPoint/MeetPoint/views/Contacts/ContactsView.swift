@@ -8,23 +8,22 @@
 import SwiftUI
 
 struct ContactsView: View {
-    @StateObject private var viewModel =  ContactsViewModel()
+    @StateObject private var viewModel = ContactsViewModel()
     @State private var selectedUser: User?
     @State private var didRequestLoad = false
-    
 
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.isLoading && viewModel.contacts.isEmpty {
-                    ProgressView("Загружаем контакты...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if viewModel.contacts.isEmpty {
-                    emptyState
-                } else {
-                    contactsList
-                }
+            SkeletonCrossfade(
+                showsSkeleton: viewModel.shouldShowSkeleton,
+                minimumSkeletonDuration: 0.35
+            ) {
+                contactsContent
+            } skeleton: {
+                ContactsSkeletonView()
+                    .background(Color.appBackground)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(Color.appBackground)
             .navigationTitle("Контакты")
             .navigationBarTitleDisplayMode(.large)
@@ -45,54 +44,55 @@ struct ContactsView: View {
         }
     }
 
-    private var contactsList: some View {
+    private var contactsContent: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
-                ForEach(viewModel.contacts) { user in
-                    Button {
-                        selectedUser = user
-                    } label: {
-                        ContactRow(user: user)
-                            .contentShape(RoundedRectangle(cornerRadius: 16))
-                    }
-                    .buttonStyle(.plain)
-                }
+            if !viewModel.contacts.isEmpty {
+                contactsList
+            } else if !viewModel.isLoading {
+                contactsEmptyState
+            } else {
+                Color.clear
+                    .containerRelativeFrame(.vertical)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 24)
         }
         .refreshable {
             await refreshContacts()
         }
     }
 
-    private var emptyState: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                VStack(spacing: 16) {
-                    
-                    Image(systemName: "person.2.slash")
-                        .font(.system(size: 52))
-                        .foregroundStyle(Color.appLightPurple)
-                    Text("Пока нет контактов")
-                        .font(.headline)
-                        .foregroundStyle(Color.appPurple)
-                    Text("Здесь появятся люди, с которыми\nсостоялось взаимное знакомство")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+    private var contactsList: some View {
+        LazyVStack(spacing: 12) {
+            ForEach(viewModel.contacts) { user in
+                Button {
+                    selectedUser = user
+                } label: {
+                    ContactRow(user: user)
+                        .contentShape(RoundedRectangle(cornerRadius: 16))
                 }
-                .frame(
-                    maxWidth: .infinity,
-                    minHeight: geometry.size.height,
-                    alignment: .center
-                )                .padding()
-            }
-            .refreshable {
-                await refreshContacts()
+                .buttonStyle(.plain)
             }
         }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 24)
+    }
+
+    private var contactsEmptyState: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "person.2.slash")
+                .font(.system(size: 52))
+                .foregroundStyle(Color.appLightPurple)
+            Text("Пока нет контактов")
+                .font(.headline)
+                .foregroundStyle(Color.appPurple)
+            Text("Здесь появятся люди, с которыми\nсостоялось взаимное знакомство")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .containerRelativeFrame(.vertical, alignment: .center)
+        .padding()
     }
 
     private func refreshContacts() async {
@@ -113,12 +113,11 @@ private struct ContactRow: View {
                 Circle()
                     .fill(Color.appLightPurple)
                     .frame(width: 40, height: 40)
-                    
+
                 Text("\(user.displayName.prefix(2))")
                     .foregroundStyle(Color.white)
                     .font(.title2)
             }
-            
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(user.displayName)
@@ -138,7 +137,7 @@ private struct ContactRow: View {
                         if let url = URL(string: "https://t.me/\(cleanUsername)") {
                             UIApplication.shared.open(url)
                         }
-                        
+
                     } label: {
                         HStack {
                             Label(telegram, systemImage: "paperplane.fill")
@@ -197,7 +196,7 @@ private struct ContactRow: View {
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(Color.appLightPurple.opacity(0.35), lineWidth: 1)
                 )
-               
+
         )
     }
 }

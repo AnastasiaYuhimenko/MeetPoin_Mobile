@@ -16,15 +16,15 @@ struct SkeletonCrossfade<Content: View, Skeleton: View>: View {
     @State private var skeletonShownAt: Date?
     
     var body: some View {
-        ZStack(alignment: .top) {
-            content()
-                .opacity(1 - skeletonOpacity)
-                .allowsHitTesting(skeletonOpacity < 0.5)
-            skeleton()
-                .opacity(skeletonOpacity)
-                .allowsHitTesting(skeletonOpacity >= 0.5)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        content()
+            .opacity(1 - skeletonOpacity)
+            .allowsHitTesting(skeletonOpacity < 0.5)
+            .overlay(alignment: .top) {
+                skeleton()
+                    .opacity(skeletonOpacity)
+                    .allowsHitTesting(skeletonOpacity >= 0.5)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onAppear { syncSkeletonVisibility(animated: false) }
         .onChange(of: showsSkeleton) { _, _ in
             syncSkeletonVisibility(animated: true)

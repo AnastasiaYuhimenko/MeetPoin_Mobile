@@ -146,6 +146,7 @@ final class AppointmentsViewModel: ObservableObject {
             if !appointments.contains(where: { $0.id == appointment.id }) {
                 appointments.append(appointment)
             }
+            self.error = nil
             return appointment
         } catch {
             self.error = UserFacingNetworkMessage.message(for: error, context: .joinAppointment)

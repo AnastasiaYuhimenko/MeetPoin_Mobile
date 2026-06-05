@@ -235,10 +235,13 @@ struct UserProfileView: View {
                         Text("Отклонить")
                             .font(.footnote)
                             .fontWeight(.medium)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.appPurple)
                             .frame(width: 150, height: 45)
-                            .background(Color.red)
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(lineWidth: 1)
+                                    .foregroundStyle(Color.appPurple)
+                            )
                     }
                     Button {
                         Task {
@@ -250,9 +253,9 @@ struct UserProfileView: View {
                         Text("Принять заявку")
                             .font(.footnote)
                             .fontWeight(.medium)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.appPurple)
                             .frame(width: 150, height: 45)
-                            .background(Color.green)
+                            .background(Color.appYellow)
                             .clipShape(RoundedRectangle(cornerRadius: 20))
                     }
                 }

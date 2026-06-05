@@ -18,6 +18,10 @@ final class ContactsViewModel: ObservableObject {
     private let service = AppNetworking.shared
     private var hasLoaded = false
 
+    var shouldShowSkeleton: Bool {
+        isLoading && contacts.isEmpty && error == nil
+    }
+
     func loadContacts(force: Bool = false) async {
         if hasLoaded && !force { return }
         if isLoading { return }

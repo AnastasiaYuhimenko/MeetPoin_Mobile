@@ -25,6 +25,10 @@ final class RequestsViewModel: ObservableObject {
     private let service = AppNetworking.shared
     private var hasLoaded = false
 
+    var shouldShowSkeleton: Bool {
+        isLoading && requests.isEmpty && error == nil
+    }
+
     func loadRequests(force: Bool = false) async {
         if hasLoaded && !force { return }
         if isLoading { return }
