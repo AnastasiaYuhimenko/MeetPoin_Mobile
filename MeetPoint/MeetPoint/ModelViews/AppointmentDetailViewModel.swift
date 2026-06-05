@@ -20,7 +20,7 @@ struct AppointmentStats {
 // MARK: - Connections
 
 enum ConnectionStatusState: Equatable {
-    case none
+    case noStatus
     case incoming(requestId: UUID?)
     case outgoing(requestId: UUID?)
     case contacts
@@ -37,7 +37,7 @@ enum ConnectionStatusState: Equatable {
         case "outgoing", "outgoing_request", "pending_outgoing", "sent", "request_sent", "pending":
             self = .outgoing(requestId: requestId)
         case "none", "not_connected", "no_set", "not_set", "no_sent", "not_sent":
-            self = .none
+            self = .noStatus
         case "request_declined":
             self = .declined(requestId: requestId)
         default:

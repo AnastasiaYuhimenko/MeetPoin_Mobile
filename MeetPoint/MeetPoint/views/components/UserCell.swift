@@ -521,7 +521,7 @@ final class UserCellView: UIView {
         } else if hasOffer {
             effectiveState = .incoming(requestId: nil)
         } else {
-            effectiveState = .none
+            effectiveState = .noStatus
         }
 
         contactsContainer.isHidden = effectiveState != .contacts
@@ -545,7 +545,7 @@ final class UserCellView: UIView {
             addFriendButton.backgroundColor = UIColor(named: "appLightPurple")
                 ?? UIColor(named: "appPurple")
                 ?? .appMutedSurface
-        case .none, .declined:
+        case .noStatus, .declined:
             offerButtonsStack.isHidden = true
             addFriendStack.isHidden = false
             addFriendButton.setTitle("Добавить в друзья", for: .normal)
@@ -576,7 +576,7 @@ final class UserCellView: UIView {
 
     @objc private func didTapDecline() {
         hasOffer = false
-        connectionState = ConnectionStatusState.none
+        connectionState = ConnectionStatusState.noStatus
         refresh()
     }
 }
